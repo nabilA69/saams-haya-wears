@@ -1,0 +1,511 @@
+/* Saam's Haya Wears — storefront */
+const { money, priceTag, saleSticker, priceInfo } = window.SHW;
+
+let DATA = { settings: {}, products: [] };
+let products = [];
+let cart = JSON.parse(localStorage.getItem('saams-haya-cart') || '[]');
+let activeFilter = 'All';
+let activeSearch = '';
+let activeSort = 'featured';
+
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const byId = id => products.find(p => p.id === id) || DATA.products.find(p => p.id === id);
+const waLink = text => `https://wa.me/${DATA.settings.whatsapp}?text=${encodeURIComponent(text)}`;
+
+/* ---------------- rendering ---------------- */
+function artwork(p, cls) {
+  if (p.images && p.images[0]) return `<img class="${cls}-photo" src="${p.images[0]}" alt="${p.name}" loading="lazy">`;
+  return `<span class="hijab"></span>`;
+}
+
+function card(p) {
+  const photo = p.images && p.images[0];
+  return `<article class="product-card${photo ? ' has-photo' : ''}">
+    <div class="product-image" data-id="${p.id}" tabindex="0" role="button" aria-label="View ${p.name}"
+         style="--card-bg:${p.bg};--garment:${p.color};--garment-dark:${p.dark}">
+      ${p.badge ? `<span class="product-badge">${p.badge}</span>` : ''}
+      ${saleSticker(p)}
+      ${artwork(p, 'card')}
+      <button class="quick-add" data-id="${p.id}">Quick add</button>
+    </div>
+    <div class="product-info">
+      <h3>${p.name}</h3>
+      <div class="product-meta">${priceTag(p)}<span>${p.category}</span>
+        <div class="swatches" aria-label="Available colours"><i style="background:${p.color}"></i><i style="background:${p.dark}"></i></div>
+      </div>
+    </div>
+  </article>`;
+}
+
+function render() {
+  products = DATA.products.filter(p => p.active !== false);
+  $('#new-grid').innerHTML = products.filter(p => p.new).slice(0, 4).map(card).join('');
+  $('#best-grid').innerHTML = products.filter(p => p.best).slice(0, 4).map(card).join('');
+  const onSale = products.filter(p => priceInfo(p).on);
+  $('#sale-rail').hidden = onSale.length === 0;
+  $('#sale-grid').innerHTML = onSale.slice(0, 8).map(card).join('');
+  renderFilters();
+  renderShop();
+}
+
+function renderFilters() {
+  const cats = DATA.settings.categories || [];
+  $('.filters').innerHTML = ['All', ...cats]
+    .map(c => `<button class="${c === activeFilter ? 'active' : ''}" data-filter="${c}">${c}</button>`).join('');
+  $$('.filters button').forEach(b => b.onclick = () => { setFilter(b.dataset.filter); });
+  $('.nav-cats').innerHTML = cats.map(c => `<a href="#shop" data-filter-link="${c}"><span>${c}</span></a>`).join('');
+  $('.menu-chips').innerHTML = cats.map(c => `<a href="#shop" data-filter-link="${c}">${c}</a>`).join('');
+  bindFilterLinks();
+}
+
+function setFilter(cat) {
+  activeFilter = cat;
+  $$('.filters button').forEach(b => b.classList.toggle('active', b.dataset.filter === cat));
+  renderShop();
+}
+
+function renderShop() {
+  let list = products.filter(p =>
+    (activeFilter === 'All' || p.category === activeFilter) &&
+    (p.name + ' ' + p.category + ' ' + (p.desc || '')).toLowerCase().includes(activeSearch));
+  if (activeSort === 'low') list.sort((a, b) => a.price - b.price);
+  if (activeSort === 'high') list.sort((a, b) => b.price - a.price);
+  if (activeSort === 'newest') list.sort((a, b) => Number(b.new) - Number(a.new));
+  if (activeSort === 'sale') list.sort((a, b) => priceInfo(b).off - priceInfo(a).off);
+  $('#shop-grid').innerHTML = list.length ? list.map(card).join('') : '<p class="empty-note">No pieces found. Try another search.</p>';
+  $('.result-count').textContent = `${list.length} piece${list.length === 1 ? '' : 's'}`;
+  bindCards();
+}
+
+function bindCards() {
+  $$('.product-image').forEach(el => {
+    el.onclick = e => { if (!e.target.closest('.quick-add')) openProduct(+el.dataset.id); };
+    el.onkeydown = e => { if (e.key === 'Enter') openProduct(+el.dataset.id); };
+  });
+  $$('.quick-add').forEach(b => b.onclick = e => {
+    e.stopPropagation();
+    const p = byId(+b.dataset.id);
+    p.sizes.length === 1 ? addItem(p.id, p.sizes[0]) : openProduct(p.id);
+  });
+}
+
+function bindFilterLinks() {
+  $$('[data-filter-link]').forEach(a => a.onclick = () => {
+    closeMenus();
+    setTimeout(() => setFilter(a.dataset.filterLink), 20);
+  });
+}
+
+/* ---------------- product dialog ---------------- */
+function openProduct(id) {
+  const p = byId(id), d = $('.product-dialog');
+  const gallery = (p.images && p.images.length)
+    ? `<div class="detail-gallery"><img class="detail-photo" src="${p.images[0]}" alt="${p.name}">
+        ${p.images.length > 1 ? `<div class="thumbs">${p.images.map((src, i) =>
+          `<button class="${i === 0 ? 'on' : ''}" data-src="${src}"><img src="${src}" alt=""></button>`).join('')}</div>` : ''}</div>`
+    : `<div class="detail-image" style="--card-bg:${p.bg};--garment:${p.color}"></div>`;
+  d.querySelector('.dialog-content').innerHTML = `${gallery}
+    <div class="detail-copy">
+      <p class="eyebrow">${p.category}</p>
+      <h2>${p.name}</h2>
+      <div class="detail-price">${priceTag(p, 'large')}</div>
+      <p class="detail-description">${p.desc || ''}</p>
+      <p class="option-label">Select size</p>
+      <div class="option-row">${p.sizes.map((s, i) => `<button class="${i === 0 ? 'selected' : ''}" data-size="${s}">${s}</button>`).join('')}</div>
+      <p class="stock-note">● ${p.stock || 'In stock'} · Ready for nationwide delivery</p>
+      <button class="button dark detail-add">Add to bag</button>
+      <a class="detail-ask" href="#" data-ask="${p.name}">Ask about this piece on WhatsApp</a>
+    </div>`;
+  d.querySelectorAll('.option-row button').forEach(b => b.onclick = () => {
+    d.querySelectorAll('.option-row button').forEach(x => x.classList.remove('selected'));
+    b.classList.add('selected');
+  });
+  d.querySelectorAll('.thumbs button').forEach(b => b.onclick = () => {
+    d.querySelectorAll('.thumbs button').forEach(x => x.classList.remove('on'));
+    b.classList.add('on');
+    d.querySelector('.detail-photo').src = b.dataset.src;
+  });
+  d.querySelector('.detail-ask').onclick = e => {
+    e.preventDefault();
+    window.open(waLink(`Hello Saam's Haya Wears, I'd like to know more about the ${p.name}.`), '_blank', 'noopener');
+  };
+  d.querySelector('.detail-add').onclick = () => {
+    addItem(id, d.querySelector('.option-row .selected').dataset.size);
+    d.close();
+  };
+  d.showModal();
+}
+
+/* ---------------- bag ---------------- */
+function addItem(id, size) {
+  const existing = cart.find(x => x.id === id && x.size === size);
+  existing ? existing.qty++ : cart.push({ id, size, qty: 1 });
+  saveCart();
+  toast(`${byId(id).name} added to your bag`);
+}
+function saveCart() { localStorage.setItem('saams-haya-cart', JSON.stringify(cart)); renderCart(); }
+
+function renderCart() {
+  cart = cart.filter(x => byId(x.id));
+  const items = $('.cart-items');
+  const total = cart.reduce((s, x) => s + byId(x.id).price * x.qty, 0);
+  const count = cart.reduce((s, x) => s + x.qty, 0);
+  $$('.cart-count').forEach(x => x.textContent = count);
+  $('.cart-count-text').textContent = `(${count})`;
+  $('.cart-total').textContent = money(total);
+  $('.checkout-total strong').textContent = money(total);
+  items.innerHTML = cart.map((x, i) => {
+    const p = byId(x.id);
+    const photo = p.images && p.images[0];
+    return `<article class="cart-item">
+      <div class="cart-thumb${photo ? ' has-photo' : ''}" style="--card-bg:${p.bg};--garment:${p.color}">${photo ? `<img src="${photo}" alt="">` : ''}</div>
+      <div><h3>${p.name}</h3><p>Size ${x.size} · ${money(p.price)}</p>
+        <div class="qty"><button data-action="minus" data-index="${i}" aria-label="Decrease quantity">−</button><span>${x.qty}</span><button data-action="plus" data-index="${i}" aria-label="Increase quantity">+</button></div>
+      </div>
+      <button class="remove-item" data-index="${i}" aria-label="Remove ${p.name}">×</button>
+    </article>`;
+  }).join('');
+  $('.cart-empty').hidden = cart.length > 0;
+  $('.cart-summary').hidden = cart.length === 0;
+  items.querySelectorAll('[data-action]').forEach(b => b.onclick = () => {
+    const i = +b.dataset.index;
+    if (b.dataset.action === 'plus') cart[i].qty++;
+    else if (--cart[i].qty <= 0) cart.splice(i, 1);
+    saveCart();
+  });
+  items.querySelectorAll('.remove-item').forEach(b => b.onclick = () => { cart.splice(+b.dataset.index, 1); saveCart(); });
+}
+
+function toggleCart(open = true) {
+  $('.cart-drawer').classList.toggle('open', open);
+  $('.cart-drawer').setAttribute('aria-hidden', !open);
+  $('.overlay').hidden = !open;
+  document.body.classList.toggle('locked', open);
+}
+
+function toast(msg) {
+  const t = $('.toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(window.toastTimer);
+  window.toastTimer = setTimeout(() => t.classList.remove('show'), 2400);
+}
+
+/* ---------------- stylish dropdown ---------------- */
+function initDropdown(root, onPick) {
+  const trigger = root.querySelector('.dd-trigger');
+  const list = root.querySelector('.dd-list');
+  const close = () => { root.classList.remove('open'); trigger.setAttribute('aria-expanded', 'false'); };
+  trigger.onclick = e => {
+    e.stopPropagation();
+    const open = !root.classList.contains('open');
+    root.classList.toggle('open', open);
+    trigger.setAttribute('aria-expanded', open);
+    if (open) list.focus();
+  };
+  list.querySelectorAll('[role="option"]').forEach(li => li.onclick = () => {
+    list.querySelectorAll('[role="option"]').forEach(x => x.setAttribute('aria-selected', 'false'));
+    li.setAttribute('aria-selected', 'true');
+    root.querySelector('.dd-value').textContent = li.textContent;
+    close();
+    onPick(li.dataset.value);
+  });
+  list.onkeydown = e => {
+    const opts = [...list.querySelectorAll('[role="option"]')];
+    const cur = opts.findIndex(o => o.classList.contains('cursor')) ;
+    if (e.key === 'Escape') { close(); trigger.focus(); }
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      const next = Math.max(0, Math.min(opts.length - 1, (cur < 0 ? -1 : cur) + (e.key === 'ArrowDown' ? 1 : -1)));
+      opts.forEach(o => o.classList.remove('cursor'));
+      opts[next].classList.add('cursor');
+    }
+    if (e.key === 'Enter') { const c = list.querySelector('.cursor'); if (c) c.click(); }
+  };
+  document.addEventListener('click', e => { if (!root.contains(e.target)) close(); });
+}
+
+function closeMenus() {
+  $('.mobile-menu').classList.remove('open');
+  $('.mobile-menu').setAttribute('aria-hidden', 'true');
+  $('.menu-toggle').setAttribute('aria-expanded', 'false');
+  $('.menu-toggle').classList.remove('open');
+  document.body.classList.remove('locked');
+  $('.nav-item.has-menu')?.classList.remove('open');
+}
+
+/* ---------------- settings applied to the page ---------------- */
+function applySettings() {
+  const s = DATA.settings;
+  $('.ann-one').textContent = s.announcement || '';
+  $('.ann-two').textContent = s.announcementTwo || '';
+  $('.dot').hidden = !(s.announcement && s.announcementTwo);
+  const [line1, em, line2] = (s.heroTitle || '').split('|');
+  if (line1) $('.hero h1').innerHTML = `${line1}<br><em>${em || ''}</em>${line2 || ''}`;
+  const heroText = $('.hero-copy > p:not(.eyebrow)');
+  if (heroText && s.heroText) heroText.textContent = s.heroText;
+  $$('[data-wa-help]').forEach(a => { a.href = waLink(s.whatsappHelpText || 'Hello!'); a.target = '_blank'; a.rel = 'noopener'; });
+  const phone = $('footer a[href^="tel:"]');
+  if (phone && s.phone) { phone.href = 'tel:' + s.phone.replace(/\s/g, ''); phone.textContent = s.phone; }
+  const snap = $('footer a[href*="snapchat"]'); if (snap && s.snapchat) snap.href = s.snapchat;
+  const tik = $('footer a[href*="tiktok"]'); if (tik && s.tiktok) tik.href = s.tiktok;
+}
+
+/* ---------------- customer account ----------------
+   The profile is kept on this device to fill in checkout faster. There is no
+   server session here, so Google and Facebook sign-in identify the shopper for
+   convenience only — treat it as a saved profile, not verified identity. */
+const CUSTOMER_KEY = 'shw-customer';
+let customer = null;
+
+function readCustomer() {
+  try { const raw = localStorage.getItem(CUSTOMER_KEY); return raw ? JSON.parse(raw) : null; }
+  catch { return null; }
+}
+function writeCustomer(c) {
+  customer = c;
+  try { c ? localStorage.setItem(CUSTOMER_KEY, JSON.stringify(c)) : localStorage.removeItem(CUSTOMER_KEY); }
+  catch { toast('This browser won’t let us save your details'); }
+  renderAccount();
+}
+
+function renderAccount() {
+  const acc = DATA.settings.accounts || {};
+  const btn = $('.account-toggle');
+  if (btn) {
+    btn.hidden = acc.enabled === false;
+    $('.account-name').textContent = customer ? customer.firstName : '';
+    btn.setAttribute('aria-label', customer ? `Your details, ${customer.firstName}` : 'Your account');
+  }
+  const inEl = $('.account-signedin'), outEl = $('.account-signedout');
+  if (!inEl) return;
+  inEl.hidden = !customer;
+  outEl.hidden = !!customer;
+  if (customer) {
+    $('.account-hello').textContent = `Hello, ${customer.firstName}`;
+    const rows = [['Name', `${customer.firstName} ${customer.lastName || ''}`.trim()], ['Email', customer.email],
+                  ['Phone', customer.phone], ['Delivery', customer.address]].filter(r => r[1]);
+    $('.account-details').innerHTML = rows.map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join('') +
+      (customer.via ? `<div><dt>Saved via</dt><dd>${customer.via}</dd></div>` : '');
+  }
+  // social buttons only offer what the owner has actually connected
+  $$('.social-btn').forEach(b => {
+    const p = b.dataset.provider;
+    const configured = p === 'google' ? !!acc.googleClientId : !!acc.facebookAppId;
+    b.classList.toggle('unconfigured', !configured);
+  });
+  $('.social-row').hidden = !(acc.googleClientId || acc.facebookAppId);
+  $('#account-form').hidden = acc.email === false;
+  $('.or-line').hidden = !(acc.googleClientId || acc.facebookAppId) || acc.email === false;
+  $('.account-note').textContent = 'Saved on this device to fill in your next order faster. Nothing is sent anywhere until you place your order.';
+}
+
+function openAccount() { renderAccount(); $('.account-dialog').showModal(); }
+
+/* ---- Google Identity Services (loaded only once, and only if configured) ---- */
+function loadScript(src) {
+  return new Promise((resolve, reject) => {
+    if (document.querySelector(`script[src="${src}"]`)) return resolve();
+    const s = document.createElement('script');
+    s.src = src; s.async = true; s.defer = true;
+    s.onload = resolve; s.onerror = () => reject(new Error('could not load'));
+    document.head.appendChild(s);
+  });
+}
+
+function decodeJwtPayload(token) {
+  try {
+    const part = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+    return JSON.parse(decodeURIComponent(escape(atob(part))));
+  } catch { return null; }
+}
+
+async function signInGoogle() {
+  const id = (DATA.settings.accounts || {}).googleClientId;
+  if (!id) return toast('Google sign-in isn’t set up yet — add your Google client ID in Owner Studio');
+  try {
+    await loadScript('https://accounts.google.com/gsi/client');
+    google.accounts.id.initialize({
+      client_id: id,
+      callback: res => {
+        const claims = decodeJwtPayload(res.credential);
+        if (!claims) return toast('Google sign-in didn’t complete');
+        writeCustomer({
+          firstName: claims.given_name || (claims.name || '').split(' ')[0] || 'Friend',
+          lastName: claims.family_name || '', email: claims.email || '',
+          phone: customer?.phone || '', address: customer?.address || '', via: 'Google'
+        });
+        $('.account-dialog').close();
+        toast(`Welcome, ${customer.firstName}`);
+      }
+    });
+    google.accounts.id.prompt();
+  } catch { toast('Google sign-in is unavailable right now'); }
+}
+
+async function signInFacebook() {
+  const appId = (DATA.settings.accounts || {}).facebookAppId;
+  if (!appId) return toast('Facebook sign-in isn’t set up yet — add your Facebook app ID in Owner Studio');
+  try {
+    await loadScript('https://connect.facebook.net/en_US/sdk.js');
+    FB.init({ appId, version: 'v19.0', xfbml: false });
+    FB.login(res => {
+      if (!res.authResponse) return toast('Facebook sign-in was cancelled');
+      FB.api('/me', { fields: 'first_name,last_name,email' }, me => {
+        writeCustomer({
+          firstName: me.first_name || 'Friend', lastName: me.last_name || '', email: me.email || '',
+          phone: customer?.phone || '', address: customer?.address || '', via: 'Facebook'
+        });
+        $('.account-dialog').close();
+        toast(`Welcome, ${customer.firstName}`);
+      });
+    }, { scope: 'public_profile,email' });
+  } catch { toast('Facebook sign-in is unavailable right now'); }
+}
+
+/* ---- checkout prefill ---- */
+function applyCustomerToCheckout() {
+  const form = $('#checkout-form');
+  if (!form) return;
+  const known = !!customer;
+  $('.identity-known').hidden = !known;
+  $('.identity-guest').hidden = known;
+  if (!known) return;
+  [['firstName', customer.firstName], ['lastName', customer.lastName], ['email', customer.email],
+   ['phone', customer.phone], ['address', customer.address]].forEach(([name, value]) => {
+    const field = form.elements[name];
+    if (field && value && !field.value) field.value = value;
+  });
+}
+
+$('.account-toggle').onclick = openAccount;
+$('.account-close').onclick = () => $('.account-dialog').close();
+$$('.social-btn').forEach(b => b.onclick = () => b.dataset.provider === 'google' ? signInGoogle() : signInFacebook());
+$('#account-form').onsubmit = e => {
+  e.preventDefault();
+  const f = new FormData(e.currentTarget);
+  writeCustomer({
+    firstName: f.get('firstName').trim(), lastName: f.get('lastName').trim(), email: f.get('email').trim(),
+    phone: (f.get('phone') || '').trim(), address: (f.get('address') || '').trim(), via: 'Email'
+  });
+  $('.account-dialog').close();
+  toast('Saved — your next order fills itself in');
+};
+$('#account-edit').onclick = () => {
+  const form = $('#account-form');
+  ['firstName', 'lastName', 'email', 'phone', 'address'].forEach(k => { if (form.elements[k]) form.elements[k].value = customer[k] || ''; });
+  $('.account-signedin').hidden = true;
+  $('.account-signedout').hidden = false;
+};
+$('#account-signout').onclick = () => { writeCustomer(null); toast('Signed out on this device'); };
+$('#checkout-signin').onclick = () => { $('.checkout-dialog').close(); openAccount(); };
+$('#checkout-notyou').onclick = () => {
+  $('#checkout-form').reset();
+  writeCustomer(null);
+  applyCustomerToCheckout();
+};
+
+/* ---------------- events ---------------- */
+$('.search-toggle').onclick = () => {
+  const p = $('.search-panel');
+  p.classList.toggle('open');
+  p.setAttribute('aria-hidden', !p.classList.contains('open'));
+  if (p.classList.contains('open')) $('#site-search').focus();
+};
+$('.search-close').onclick = () => $('.search-panel').classList.remove('open');
+$('#site-search').oninput = e => {
+  activeSearch = e.target.value.trim().toLowerCase();
+  renderShop();
+  $('#shop').scrollIntoView({ behavior: 'smooth' });
+};
+
+const menu = $('.mobile-menu');
+$('.menu-toggle').onclick = e => {
+  const open = !menu.classList.contains('open');
+  menu.classList.toggle('open', open);
+  e.currentTarget.classList.toggle('open', open);
+  e.currentTarget.setAttribute('aria-expanded', open);
+  menu.setAttribute('aria-hidden', !open);
+  document.body.classList.toggle('locked', open);
+};
+menu.addEventListener('click', e => { if (e.target.closest('a')) closeMenus(); });
+
+const shopNav = $('.nav-item.has-menu');
+shopNav.querySelector('.nav-trigger').onclick = e => {
+  e.stopPropagation();
+  const open = !shopNav.classList.contains('open');
+  shopNav.classList.toggle('open', open);
+  e.currentTarget.setAttribute('aria-expanded', open);
+};
+shopNav.addEventListener('mouseenter', () => shopNav.classList.add('open'));
+shopNav.addEventListener('mouseleave', () => shopNav.classList.remove('open'));
+shopNav.addEventListener('click', e => { if (e.target.closest('a')) shopNav.classList.remove('open'); });
+document.addEventListener('click', e => { if (!shopNav.contains(e.target)) shopNav.classList.remove('open'); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeMenus(); });
+
+$('.cart-toggle').onclick = () => toggleCart(true);
+$('.drawer-close').onclick = () => toggleCart(false);
+$('.overlay').onclick = () => toggleCart(false);
+$('.close-and-shop').onclick = () => toggleCart(false);
+$('.product-dialog .dialog-close').onclick = () => $('.product-dialog').close();
+$('.checkout-btn').onclick = () => {
+  toggleCart(false); applyCustomerToCheckout();
+  $('.payment-setup-note').hidden = !!DATA.settings.paymentApiUrl;
+  $('.online-pay').classList.toggle('needs-setup', !DATA.settings.paymentApiUrl);
+  $('.checkout-dialog').showModal();
+};
+$('.checkout-close').onclick = () => $('.checkout-dialog').close();
+
+const channelLabels = { mobile_money: 'Pay with MTN Mobile Money', card: 'Pay securely by card', bank_transfer: 'Pay by bank transfer' };
+$$('.pay-method input').forEach(input => input.onchange = () => {
+  $$('.pay-method').forEach(label => label.classList.toggle('selected', label.contains(input)));
+  $('.online-pay').textContent = channelLabels[input.value];
+});
+
+$('#checkout-form').onsubmit = async e => {
+  e.preventDefault();
+  const f = new FormData(e.currentTarget);
+  const lines = cart.map(x => {
+    const p = byId(x.id);
+    return `• ${p.name} — size ${x.size} × ${x.qty} (${money(p.price * x.qty)})`;
+  });
+  const total = cart.reduce((s, x) => s + byId(x.id).price * x.qty, 0);
+  if (e.submitter?.value === 'online') {
+    if (!DATA.settings.paymentApiUrl) return toast('Online payments need to be connected in Owner Studio first');
+    const button = e.submitter;
+    button.disabled = true; button.textContent = 'Opening secure payment…';
+    try {
+      const response = await fetch(DATA.settings.paymentApiUrl, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:f.get('email'),amount:total,currency:'GHS',channel:f.get('onlineChannel'),customer:{firstName:f.get('firstName'),lastName:f.get('lastName'),phone:f.get('phone')},delivery:f.get('address'),items:cart.map(x=>({id:x.id,name:byId(x.id).name,size:x.size,quantity:x.qty,unitPrice:byId(x.id).price}))})});
+      if (!response.ok) throw new Error('Payment setup did not respond');
+      const result = await response.json();
+      if (!result.access_code || typeof PaystackPop === 'undefined') throw new Error('Payment could not be opened');
+      const popup = new PaystackPop();
+      popup.resumeTransaction(result.access_code);
+    } catch (err) { toast(err.message || 'Online payment is temporarily unavailable'); }
+    finally { button.disabled = false; button.textContent = 'Pay securely online'; }
+    return;
+  }
+  const msg = `Hello Saam's Haya Wears, I'd like to place an order.\n\n${lines.join('\n')}\n\nTotal: ${money(total)}\n\nName: ${f.get('firstName')} ${f.get('lastName')}\nEmail: ${f.get('email')}\nPhone: ${f.get('phone')}\nDelivery: ${f.get('address')}\nPayment: WhatsApp confirmation`;
+  window.open(waLink(msg), '_blank', 'noopener'); $('.checkout-dialog').close();
+};
+
+const newsletterForm = $('#newsletter-form');
+if (newsletterForm) newsletterForm.onsubmit = e => { e.preventDefault(); e.currentTarget.reset(); toast('Welcome to the Saam’s Haya circle'); };
+$('#year').textContent = new Date().getFullYear();
+initDropdown($('#sort-dd'), v => { activeSort = v; renderShop(); });
+
+/* ---------------- boot ---------------- */
+window.SHW.loadStore().then(data => {
+  DATA = data;
+  window.SHW.useSettings(DATA.settings);
+  applySettings();
+  customer = readCustomer();
+  renderAccount();
+  render();
+  renderCart();
+});
+/* Live refresh when the owner publishes from the admin page in another tab. */
+window.addEventListener('storage', e => {
+  if (e.key === window.SHW.STORE_KEYS.draft) window.SHW.loadStore().then(d => { DATA = d; window.SHW.useSettings(DATA.settings); applySettings(); render(); renderCart(); });
+});

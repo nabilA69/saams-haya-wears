@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 260" role="img" aria-labelledby="title desc">
+  <title id="title">Saam’s Haya Wears</title>
+  <desc id="desc">Editorial fashion-house wordmark in deep olive and antique gold</desc>
+  <rect width="600" height="260" fill="#f5f1e7"/>
+  <text x="300" y="125" text-anchor="middle" fill="#1e2c19" font-family="Georgia, 'Times New Roman', serif" font-size="78" letter-spacing="-2">Saam’s Haya</text>
+  <path d="M112 181h105M383 181h105" stroke="#cba23a" stroke-width="2"/>
+  <text x="300" y="191" text-anchor="middle" fill="#a27b19" font-family="Arial, sans-serif" font-size="20" font-weight="700" letter-spacing="14">WEARS</text>
+</svg>

@@ -1,0 +1,14 @@
+/* Dimensional interaction layer for the public storefront */
+.motion-3d{--rx:0deg;--ry:0deg;--lift:0px;--shine-x:50%;--shine-y:50%;position:relative;transform-style:preserve-3d;transform:perspective(760px) rotateX(var(--rx)) rotateY(var(--ry)) translateY(var(--lift));transition:transform .18s cubic-bezier(.2,.8,.2,1),box-shadow .22s,border-color .22s,filter .22s;will-change:transform;isolation:isolate}
+.motion-3d:not(.text-link):not(.brand):not(.nav-link-3d){overflow:hidden}
+.motion-3d:before{content:"";position:absolute;inset:-1px;z-index:-1;pointer-events:none;background:radial-gradient(circle at var(--shine-x) var(--shine-y),rgba(230,200,106,.38),transparent 43%);opacity:0;transition:opacity .22s}
+.motion-3d:hover{--lift:-5px;box-shadow:0 16px 28px rgba(24,32,20,.2),0 4px 0 rgba(203,162,58,.3);filter:saturate(1.06)}
+.motion-3d:hover:before{opacity:1}
+.motion-3d:active{--lift:2px;transform:perspective(760px) rotateX(calc(var(--rx)*.25)) rotateY(calc(var(--ry)*.25)) translateY(2px) scale(.97);box-shadow:0 3px 6px rgba(24,32,20,.18)}
+.product-image.motion-3d:hover{box-shadow:0 24px 42px rgba(24,32,20,.2),8px 9px 0 rgba(203,162,58,.22)}
+.product-image.motion-3d:before{width:37%;height:12%;inset:auto;left:32%;top:12%;border-radius:50%;background:rgba(70,52,39,.9);opacity:1;z-index:2}
+.pay-method.motion-3d.selected{box-shadow:inset 3px 0 var(--gold),0 10px 22px rgba(24,32,20,.1)}
+.nav-link-3d{display:inline-block}.brand.motion-3d:hover{box-shadow:none;filter:none}.brand.motion-3d:before,.text-link.motion-3d:before,.nav-link-3d:before{display:none}
+@keyframes tactileTap{0%{transform:perspective(600px) scale(1)}45%{transform:perspective(600px) scale(.94) rotateX(5deg)}100%{transform:perspective(600px) scale(1)}}
+.motion-3d.touch-pop{animation:tactileTap .32s ease}
+@media(prefers-reduced-motion:reduce){.motion-3d,.motion-3d:hover,.motion-3d:active{transform:none!important;transition:none!important;box-shadow:none!important;filter:none!important}.motion-3d:before{display:none}.motion-3d.touch-pop{animation:none}}
