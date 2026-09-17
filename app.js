@@ -52,22 +52,38 @@ function render() {
 function renderFilters() {
   const cats = DATA.settings.categories || [];
   $('.filters').innerHTML = ['All', ...cats]
-    .map(c => `<button class="${c === activeFilter ? 'active' : ''}" data-filter="${c}">${c}</button>`).join('');
-  $$('.filters button').forEach(b => b.onclick = () => { setFilter(b.dataset.filter); });
+    .map(c => `<button type="button" class="${c === activeFilter ? 'active' : ''}" data-filter="${c}" aria-pressed="${c === activeFilter}">${c}</button>`).join('');
+  $$('.filters button').forEach(b => b.onclick = () => { setFilter(b.dataset.filter, true); });
   $('.nav-cats').innerHTML = cats.map(c => `<a href="#shop" data-filter-link="${c}"><span>${c}</span></a>`).join('');
   $('.menu-chips').innerHTML = cats.map(c => `<a href="#shop" data-filter-link="${c}">${c}</a>`).join('');
   bindFilterLinks();
 }
 
-function setFilter(cat) {
+function setFilter(cat, moveFocus = false) {
   activeFilter = cat;
-  $$('.filters button').forEach(b => b.classList.toggle('active', b.dataset.filter === cat));
+  activeSearch = '';
+  const search = $('#site-search');
+  if (search) search.value = '';
+  $$('.filters button').forEach(b => {
+    const selected = b.dataset.filter === cat;
+    b.classList.toggle('active', selected);
+    b.setAttribute('aria-pressed', selected);
+  });
   renderShop();
+  if (moveFocus) {
+    const grid = $('#shop-grid');
+    grid.setAttribute('tabindex', '-1');
+    requestAnimationFrame(() => {
+      grid.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
+      grid.focus({ preventScroll: true });
+    });
+  }
 }
 
 function renderShop() {
+  const normal = value => String(value || '').trim().toLocaleLowerCase();
   let list = products.filter(p =>
-    (activeFilter === 'All' || p.category === activeFilter) &&
+    (activeFilter === 'All' || normal(p.category) === normal(activeFilter)) &&
     (p.name + ' ' + p.category + ' ' + (p.desc || '')).toLowerCase().includes(activeSearch));
   if (activeSort === 'low') list.sort((a, b) => a.price - b.price);
   if (activeSort === 'high') list.sort((a, b) => b.price - a.price);
@@ -245,6 +261,15 @@ function applySettings() {
   if (line1) $('.hero h1').innerHTML = `${line1}<br><em>${em || ''}</em>${line2 || ''}`;
   const heroText = $('.hero-copy > p:not(.eyebrow)');
   if (heroText && s.heroText) heroText.textContent = s.heroText;
+  const heroEyebrow = $('[data-hero-eyebrow]');
+  if (heroEyebrow && s.heroEyebrow) heroEyebrow.textContent = s.heroEyebrow;
+  const heroButton = $('[data-hero-button]');
+  if (heroButton && s.heroButtonText) heroButton.textContent = s.heroButtonText;
+  const featureLabel = $('[data-hero-feature-label]');
+  if (featureLabel && s.heroFeaturedLabel) featureLabel.textContent = s.heroFeaturedLabel;
+  const featureTitle = $('[data-hero-feature-title]');
+  if (featureTitle && s.heroFeaturedTitle) featureTitle.textContent = s.heroFeaturedTitle;
+  if (s.heroImage) $$('.hero-campaign, .hero-card-photo img').forEach(img => { img.src = s.heroImage; });
   $$('[data-wa-help]').forEach(a => { a.href = waLink(s.whatsappHelpText || 'Hello!'); a.target = '_blank'; a.rel = 'noopener'; });
   const phone = $('footer a[href^="tel:"]');
   if (phone && s.phone) { phone.href = 'tel:' + s.phone.replace(/\s/g, ''); phone.textContent = s.phone; }

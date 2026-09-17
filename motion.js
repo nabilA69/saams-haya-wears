@@ -4,6 +4,23 @@
   const finePointer = matchMedia('(hover: hover) and (pointer: fine)');
   const selector = 'button:not([disabled]), a[href]:not(.wa-float), label.pay-method, .product-image[role="button"]';
 
+  const hero = document.querySelector('[data-hero-depth]');
+  if (hero) {
+    hero.addEventListener('pointermove', event => {
+      if (reduce.matches || !finePointer.matches) return;
+      const box = hero.getBoundingClientRect();
+      const x = (event.clientX - box.left) / box.width - .5;
+      const y = (event.clientY - box.top) / box.height - .5;
+      hero.style.setProperty('--hero-x', `${x * 16}px`);
+      hero.style.setProperty('--hero-y', `${y * 13}px`);
+      hero.style.setProperty('--hero-rx', `${-y * 5}deg`);
+      hero.style.setProperty('--hero-ry', `${x * 7}deg`);
+    });
+    hero.addEventListener('pointerleave', () => {
+      ['--hero-x', '--hero-y', '--hero-rx', '--hero-ry'].forEach(name => hero.style.removeProperty(name));
+    });
+  }
+
   function enhance(root = document) {
     root.querySelectorAll(selector).forEach(el => {
       if (el.classList.contains('motion-3d')) return;

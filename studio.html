@@ -1,0 +1,342 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex" />
+  <title>Owner Studio — Saam’s Haya Wears</title>
+  <link rel="icon" href="assets/logo.svg" type="image/svg+xml" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Italiana&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="admin.css?v=6" />
+  <script>
+    /* Bounce straight back to the login page if this tab hasn’t unlocked,
+       before any of the studio paints. */
+    if (location.hostname === '127.0.0.1' || location.hostname === 'localhost') {
+      try { if (!sessionStorage.getItem('shw-admin-session')) location.replace('admin.html'); }
+      catch (e) { location.replace('admin.html?storage=blocked'); }
+    } else {
+      document.documentElement.style.visibility = 'hidden';
+      fetch('/api/admin/session', { credentials: 'same-origin' }).then(r => {
+        if (!r.ok) location.replace('/admin.html');
+        else document.documentElement.style.visibility = '';
+      }).catch(() => location.replace('/admin.html'));
+    }
+  </script>
+  <script defer src="store.js?v=6"></script>
+  <script defer src="admin.js?v=6"></script>
+</head>
+<body class="studio-page">
+
+<!-- ============ studio ============ -->
+<div class="studio" id="studio">
+  <aside class="side">
+    <a class="side-brand" href="index.html"><img src="assets/logo.svg" alt=""><span><strong>Saam’s Haya</strong><small>OWNER STUDIO</small></span></a>
+    <nav class="side-nav">
+      <button class="on" data-tab="products"><i>◈</i> Listings</button>
+      <button data-tab="landing"><i>▣</i> Landing page</button>
+      <button data-tab="design"><i>✦</i> Sale designs</button>
+      <button data-tab="settings"><i>⚙</i> Store settings</button>
+      <button data-tab="publish"><i>↥</i> Publish</button>
+    </nav>
+    <div class="side-foot">
+      <a class="btn ghost" href="index.html" target="_blank" rel="noopener">View storefront ↗</a>
+      <button class="btn ghost" id="lock-btn">Lock studio</button>
+    </div>
+  </aside>
+
+  <main class="work">
+    <header class="work-head">
+      <div><p class="eyebrow" id="crumb">Listings</p><h2 id="work-title">Your listings</h2></div>
+      <div class="head-actions">
+        <span class="save-state" id="save-state">All changes saved</span>
+        <button class="btn primary" id="new-product">+ New listing</button>
+      </div>
+    </header>
+
+    <!-- Listings -->
+    <section class="panel on" id="tab-products">
+      <div class="stat-row">
+        <div class="stat"><small>Live listings</small><strong id="s-live">0</strong></div>
+        <div class="stat"><small>On sale</small><strong id="s-sale">0</strong></div>
+        <div class="stat"><small>Hidden</small><strong id="s-hidden">0</strong></div>
+        <div class="stat"><small>Catalogue value</small><strong id="s-value">GH₵ 0</strong></div>
+      </div>
+      <div class="list-toolbar">
+        <input id="admin-search" type="search" placeholder="Search listings…">
+        <select id="admin-filter"><option value="all">All listings</option><option value="sale">On sale</option><option value="live">Live only</option><option value="hidden">Hidden only</option></select>
+      </div>
+      <div class="listings" id="listings"></div>
+    </section>
+
+    <!-- Landing page -->
+    <section class="panel" id="tab-landing">
+      <p class="panel-lede">Edit the first impression shoppers see. The preview uses the same B2 + B3 editorial composition as the storefront.</p>
+      <div class="landing-editor-grid">
+        <div class="card landing-fields">
+          <h3>Hero content</h3>
+          <label>Small heading<input data-hero-set="heroEyebrow" placeholder="Modest fashion · Ghana"></label>
+          <label>Headline <small>put | around the gold words</small><input data-hero-set="heroTitle" placeholder="Presence,|beautifully| worn."></label>
+          <label>Description<textarea data-hero-set="heroText" rows="4"></textarea></label>
+          <div class="two">
+            <label>Main button<input data-hero-set="heroButtonText" placeholder="Shop new arrivals"></label>
+            <label>Card label<input data-hero-set="heroFeaturedLabel" placeholder="Featured collection"></label>
+          </div>
+          <label>Featured collection name<input data-hero-set="heroFeaturedTitle" placeholder="Olive Signature Edit"></label>
+          <h3>Campaign image</h3>
+          <label class="dropzone landing-dropzone">
+            <input id="hero-image-file" type="file" accept="image/*" hidden>
+            <span><b>Choose hero photo</b></span>
+            <small>Portrait or editorial JPG/PNG · resized automatically</small>
+          </label>
+          <div class="row-btns"><button class="btn ghost" id="hero-image-reset" type="button">Use original campaign photo</button></div>
+        </div>
+        <div class="landing-preview-wrap">
+          <p class="mini-label">Live preview</p>
+          <div class="landing-preview" id="landing-preview"></div>
+          <p class="preview-note">Pointer depth and full animation appear on the actual storefront.</p>
+          <a class="btn primary" href="index.html#home" target="_blank" rel="noopener">Open full storefront ↗</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Sale designs -->
+    <section class="panel" id="tab-design">
+      <p class="panel-lede">Every design here is yours to change — colours, shape, wording, size and where it sits on the photo. Pick one as the default for new sales, or build your own from any of them.</p>
+      <div class="design-toolbar">
+        <label class="mini">Preview discount
+          <input id="preview-off" type="range" min="5" max="70" value="25" step="5">
+          <b id="preview-off-val">25%</b>
+        </label>
+        <div class="row-btns">
+          <button class="btn ghost" id="new-design">+ New design</button>
+          <button class="btn ghost" id="apply-all">Apply default to all items on sale</button>
+        </div>
+      </div>
+      <div class="design-grid" id="design-grid"></div>
+    </section>
+
+    <!-- Store settings -->
+    <section class="panel" id="tab-settings">
+      <div class="settings-grid">
+        <div class="card">
+          <h3>Contact &amp; WhatsApp</h3>
+          <label>WhatsApp number <small>digits only, with country code</small><input data-set="whatsapp" placeholder="233557896248"></label>
+          <label>Help-button message<input data-set="whatsappHelpText"></label>
+          <label>Phone shown in footer<input data-set="phone"></label>
+          <label>Snapchat link<input data-set="snapchat"></label>
+          <label>TikTok link<input data-set="tiktok"></label>
+          <h3>Online payments</h3>
+          <label>Secure payment endpoint <small>provided when Paystack is connected</small><input data-set="paymentApiUrl" placeholder="https://your-site.com/api/paystack/initialize"></label>
+          <p class="hint">This protected endpoint initializes and verifies MTN Mobile Money, card and bank-transfer payments. Never paste a Paystack secret key into this page.</p>
+        </div>
+        <div class="card">
+          <h3>Top banner</h3>
+          <label>Announcement line 1<input data-set="announcement"></label>
+          <label>Announcement line 2<input data-set="announcementTwo"></label>
+          <h3>Hero</h3>
+          <label>Headline <small>use | around the italic words, e.g. Modesty,|beautifully| worn.</small><input data-set="heroTitle"></label>
+          <label>Intro paragraph<textarea data-set="heroText" rows="3"></textarea></label>
+        </div>
+        <div class="card">
+          <h3>Customer accounts</h3>
+          <p class="hint">Shoppers can always check out as a guest. These settings control what else you offer them.</p>
+          <label class="switch"><input data-set-acc="enabled" type="checkbox"><span></span> Offer accounts on the storefront</label>
+          <label class="switch"><input data-set-acc="email" type="checkbox"><span></span> Let shoppers save details by email</label>
+          <label>Google client ID <small>from Google Cloud → Credentials</small><input data-set-acc="googleClientId" placeholder="…apps.googleusercontent.com"></label>
+          <label>Facebook app ID <small>from developers.facebook.com</small><input data-set-acc="facebookAppId" placeholder="e.g. 1234567890"></label>
+          <p class="hint warn">Leave a field blank and that button stays hidden. Saved details live in the shopper’s own browser — handy for filling in checkout, but not a real account until the site has a backend to sign people in against.</p>
+        </div>
+        <div class="card">
+          <h3>Categories</h3>
+          <p class="hint">These drive the shop filters and the Shop menu.</p>
+          <div class="chips" id="cat-chips"></div>
+          <div class="chip-add"><input id="cat-new" placeholder="Add a category…"><button class="btn ghost" id="cat-add">Add</button></div>
+          <h3>Local preview PIN</h3>
+          <label>PIN used only on localhost<input data-set="adminPin"></label>
+          <p class="hint">The live website uses the secure owner password stored in Vercel. Change that password from Vercel’s Environment Variables settings.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Publish -->
+    <section class="panel" id="tab-publish">
+      <div class="publish-wrap">
+        <div class="card">
+          <h3>1 · Preview on this device</h3>
+          <p class="hint">Everything you edit is saved instantly to this browser, so opening the storefront here shows your latest work — including anything you haven’t published yet.</p>
+          <a class="btn ghost" href="index.html" target="_blank" rel="noopener">Open storefront preview ↗</a>
+        </div>
+        <div class="card">
+          <h3>2 · Publish to everyone</h3>
+          <p class="hint">Publish directly to your secure cloud catalogue. Every visitor on samshaya.shop receives the update immediately.</p>
+          <div class="row-btns"><button class="btn primary" id="publish-live">Publish changes live</button><button class="btn ghost" id="download-json">Download catalog.json</button></div>
+          <p class="pub-meta" id="pub-meta"></p>
+        </div>
+        <div class="card">
+          <h3>Backup &amp; restore</h3>
+          <p class="hint">Keep a copy before big changes, or move your catalogue to another computer.</p>
+          <div class="row-btns">
+            <button class="btn ghost" id="backup">Download backup</button>
+            <label class="btn ghost file-btn">Restore from file<input id="restore" type="file" accept="application/json" hidden></label>
+            <button class="btn danger-ghost" id="reset">Reset to starter catalogue</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- ============ listing editor ============ -->
+<div class="editor-overlay" id="editor-overlay" hidden></div>
+<aside class="editor" id="editor" aria-hidden="true">
+  <header class="editor-head">
+    <div><p class="eyebrow" id="editor-mode">New listing</p><h2 id="editor-title">Add a piece</h2></div>
+    <button class="icon-x" id="editor-close" aria-label="Close editor">×</button>
+  </header>
+
+  <div class="editor-body">
+    <div class="editor-form">
+      <div class="card">
+        <h3>The basics</h3>
+        <label>Product name<input id="f-name" placeholder="e.g. Afiya Pleated Abaya"></label>
+        <div class="two">
+          <label>Category<select id="f-category"></select></label>
+          <label>Corner badge <small>optional</small><input id="f-badge" placeholder="New, Limited…"></label>
+        </div>
+        <label>Description<textarea id="f-desc" rows="4" placeholder="How it feels, how it fits, what makes it special."></textarea></label>
+        <div class="two">
+          <label>Stock note<input id="f-stock" placeholder="In stock"></label>
+          <label>Sizes <small>comma separated</small><input id="f-sizes" placeholder="52, 54, 56"></label>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Photos</h3>
+        <p class="hint">The first photo is the one shoppers see on the grid. Drag isn’t needed — use “Make main”.</p>
+        <label class="dropzone" id="dropzone">
+          <input id="f-images" type="file" accept="image/*" multiple hidden>
+          <span><b>Choose photos</b> or drop them here</span>
+          <small>JPG or PNG · resized automatically for fast loading</small>
+        </label>
+        <div class="thumb-row" id="thumb-row"></div>
+        <details class="fallback">
+          <summary>No photo yet? Set the illustrated colours</summary>
+          <div class="three">
+            <label>Garment<input id="f-color" type="color"></label>
+            <label>Shadow<input id="f-dark" type="color"></label>
+            <label>Background<input id="f-bg" type="color"></label>
+          </div>
+        </details>
+      </div>
+
+      <div class="card">
+        <h3>Price &amp; discount</h3>
+        <div class="two">
+          <label>Selling price (GH₵)<input id="f-price" type="number" min="0" step="1"></label>
+          <label>Was price (GH₵) <small>shown struck through</small><input id="f-compare" type="number" min="0" step="1"></label>
+        </div>
+        <label class="switch"><input id="f-sale" type="checkbox"><span></span> Put this piece on sale</label>
+        <div id="sale-fields" hidden>
+          <label>Sale wording<input id="f-sale-label" placeholder="Sale"></label>
+          <p class="mini-label">Price-tag design</p>
+          <div class="style-grid" id="style-grid"></div>
+          <p class="save-hint" id="off-hint"></p>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Where it shows</h3>
+        <label class="switch"><input id="f-active" type="checkbox"><span></span> Visible on the storefront</label>
+        <label class="switch"><input id="f-new" type="checkbox"><span></span> Feature in “New arrivals”</label>
+        <label class="switch"><input id="f-best" type="checkbox"><span></span> Feature in “Best sellers”</label>
+      </div>
+    </div>
+
+    <div class="editor-preview">
+      <p class="mini-label">Live preview</p>
+      <div class="preview-card" id="preview-card"></div>
+      <p class="preview-note">This is exactly how the piece appears on the shop grid.</p>
+    </div>
+  </div>
+
+  <footer class="editor-foot">
+    <button class="btn danger-ghost" id="delete-product">Delete listing</button>
+    <div><button class="btn ghost" id="cancel-product">Cancel</button><button class="btn primary" id="save-product">Save listing</button></div>
+  </footer>
+</aside>
+
+<!-- ============ sale design editor ============ -->
+<aside class="editor design-editor" id="design-editor" aria-hidden="true">
+  <header class="editor-head">
+    <div><p class="eyebrow" id="design-mode">Sale design</p><h2 id="design-title">Edit design</h2></div>
+    <button class="icon-x" id="design-close" aria-label="Close design editor">×</button>
+  </header>
+
+  <div class="editor-body">
+    <div class="editor-form">
+      <div class="card">
+        <h3>Name &amp; wording</h3>
+        <label>Design name<input id="d-name"></label>
+        <label>Badge on the photo <small>use {label} {off} {price} {was} {save}; a | splits it into two lines</small><input id="d-stickerText"></label>
+        <label>Chip beside the price<input id="d-tagText"></label>
+        <label class="switch"><input id="d-showSticker" type="checkbox"><span></span> Show the badge on the photo</label>
+        <label class="switch"><input id="d-showTag" type="checkbox"><span></span> Show the chip beside the price</label>
+        <label class="switch"><input id="d-showWas" type="checkbox"><span></span> Show the old price struck through</label>
+      </div>
+
+      <div class="card">
+        <h3>Shape &amp; placement</h3>
+        <div class="two">
+          <label>Shape<select id="d-shape"></select></label>
+          <label>Position on the photo<select id="d-position"></select></label>
+        </div>
+        <div class="two">
+          <label>Text size <small><b id="d-size-val">9</b> px</small><input id="d-size" type="range" min="7" max="20" step="1"></label>
+          <label>Corner rounding <small><b id="d-radius-val">0</b> px</small><input id="d-radius" type="range" min="0" max="100" step="1"></label>
+        </div>
+        <div class="two">
+          <label>Letter spacing <small><b id="d-tracking-val">10</b></small><input id="d-tracking" type="range" min="0" max="30" step="1"></label>
+          <label class="stack-switches">
+            <span class="switch"><input id="d-uppercase" type="checkbox"><span></span> Capitals</span>
+            <span class="switch"><input id="d-animate" type="checkbox"><span></span> Gentle pulse</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Colours</h3>
+        <div class="three">
+          <label>Badge colour<input id="d-bg" type="color"></label>
+          <label>Badge fade-to <small>optional</small><input id="d-bg2" type="color"></label>
+          <label>Badge text<input id="d-fg" type="color"></label>
+        </div>
+        <label class="switch"><input id="d-gradient" type="checkbox"><span></span> Fade between the two badge colours</label>
+        <div class="three">
+          <label>Chip colour<input id="d-tagBg" type="color"></label>
+          <label>Chip text<input id="d-tagFg" type="color"></label>
+          <label>Sale price<input id="d-priceColor" type="color"></label>
+        </div>
+        <label>Old price<input id="d-wasColor" type="color"></label>
+      </div>
+    </div>
+
+    <div class="editor-preview">
+      <p class="mini-label">Live preview</p>
+      <div class="preview-card" id="design-preview"></div>
+      <label class="mini preview-slider">Discount
+        <input id="d-preview-off" type="range" min="5" max="70" value="25" step="5">
+        <b id="d-preview-off-val">25%</b>
+      </label>
+      <p class="preview-note">Changes apply to every piece already using this design.</p>
+    </div>
+  </div>
+
+  <footer class="editor-foot">
+    <div><button class="btn danger-ghost" id="design-reset">Reset to original</button><button class="btn danger-ghost" id="design-delete" hidden>Delete design</button></div>
+    <div><button class="btn ghost" id="design-cancel">Cancel</button><button class="btn primary" id="design-save">Save design</button></div>
+  </footer>
+</aside>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>

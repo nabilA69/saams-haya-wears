@@ -2,6 +2,18 @@
 
 A polished, mobile-first editorial ecommerce storefront for Saam’s Haya Wears.
 
+## Owner Studio on Vercel
+
+The public store and protected Owner Studio share one deployment:
+
+- Storefront: `/`
+- Owner login: `/admin.html`
+- Owner workspace: `/studio.html`
+
+Production authentication uses an HTTP-only signed session. Configure `ADMIN_PASSWORD` and a long random `ADMIN_SESSION_SECRET` as encrypted Vercel environment variables. The four-digit local PIN is used only on `localhost`.
+
+The live catalogue is stored in Vercel Blob. Connect a Blob store to the Vercel project so `BLOB_READ_WRITE_TOKEN` is provisioned automatically. The storefront reads `/api/catalog`, and authenticated owners publish through that endpoint. Never commit any secrets; `.env.example` lists variable names only.
+
 ## Run locally
 
 No installation or build step is required.

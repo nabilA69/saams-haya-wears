@@ -18,6 +18,11 @@ const SEED = {
     tiktok: 'https://www.tiktok.com/@queenmishti07',
     heroTitle: 'Modesty,|beautifully| worn.',
     heroText: 'Thoughtfully selected silhouettes for the woman who dresses with intention. Refined, graceful, and made for every chapter.',
+    heroEyebrow: 'Modest fashion · Ghana',
+    heroButtonText: 'Shop new arrivals',
+    heroFeaturedLabel: 'Featured collection',
+    heroFeaturedTitle: 'Olive Signature Edit',
+    heroImage: 'assets/campaign-olive-v2.jpg',
     categories: ['Abayas', 'Khimars', 'Sets', 'Accessories'],
     defaultSaleStyle: 'classic',
     saleDesigns: {},
@@ -88,7 +93,8 @@ function writeSession(v) {
 async function loadStore() {
   let published = null;
   try {
-    const res = await fetch('data/catalog.json', { cache: 'no-store' });
+    const remote = location.protocol === 'https:' ? '/api/catalog' : 'data/catalog.json';
+    const res = await fetch(remote, { cache: 'no-store' });
     if (res.ok) published = await res.json();
   } catch { /* opened from file:// or not published yet */ }
   const draft = readDraft();

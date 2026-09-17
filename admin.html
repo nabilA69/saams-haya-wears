@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex" />
+  <title>Owner login — Saam’s Haya Wears</title>
+  <link rel="icon" href="assets/logo.svg" type="image/svg+xml" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Italiana&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="admin.css?v=6" />
+  <script defer src="store.js?v=6"></script>
+  <script src="admin-local-config.js" onerror="this.remove()"></script>
+  <script defer src="login.js?v=6"></script>
+</head>
+<body class="login-page">
+
+<div class="lock" id="lock">
+  <form class="lock-card" id="lock-form">
+    <span class="lock-mark"><img src="assets/logo.svg" alt=""></span>
+    <p class="eyebrow">Saam’s Haya Wears</p>
+    <h1>Owner Studio</h1>
+    <p class="lock-sub">Enter your owner password to manage the storefront.</p>
+    <input id="pin" type="password" placeholder="Owner password" autocomplete="current-password" aria-label="Owner password">
+    <button class="btn primary" type="submit">Unlock studio</button>
+    <p class="lock-err" id="lock-err" hidden>That PIN doesn’t match. Try again.</p>
+    <small>Your production password is stored securely in Vercel, never in the website files.</small>
+    <a class="lock-back" href="index.html">← Back to the storefront</a>
+  </form>
+</div>
+
+<script>
+  /* If store.js / login.js never loaded, the PIN box would sit there doing nothing.
+     Say what actually went wrong instead. */
+  window.addEventListener('load', function () {
+    setTimeout(function () {
+      if (window.SHW) return;
+      var el = document.getElementById('lock-err');
+      el.textContent = 'The studio files didn’t load. Open this page through a web address (http://…) — run a local server in the shop folder, or use your live site — rather than opening the file directly.';
+      el.hidden = false;
+    }, 900);
+  });
+</script>
+</body>
+</html>

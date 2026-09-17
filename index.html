@@ -12,11 +12,11 @@
   <link rel="icon" href="assets/logo.svg" type="image/svg+xml" />
   <link rel="stylesheet" href="styles.css?v=5" />
   <link rel="stylesheet" href="motion.css?v=1" />
-  <link rel="stylesheet" href="landing-v2.css?v=2" />
-  <script defer src="store.js?v=5"></script>
+  <link rel="stylesheet" href="landing-v2.css?v=3" />
+  <script defer src="store.js?v=6"></script>
   <script src="https://js.paystack.co/v2/inline.js"></script>
-  <script defer src="app.js?v=5"></script>
-  <script defer src="motion.js?v=2"></script>
+  <script defer src="app.js?v=6"></script>
+  <script defer src="motion.js?v=3"></script>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -73,17 +73,26 @@
   <div class="search-panel" aria-hidden="true"><label for="site-search">What are you looking for?</label><div><input id="site-search" type="search" placeholder="Search abayas, khimars, sets…"><button class="search-close" aria-label="Close search">×</button></div></div>
 
   <main id="main">
-    <section class="hero" id="home">
+    <section class="hero hero-runway" id="home" data-hero-depth>
       <div class="hero-art" role="img" aria-label="Woman wearing an elegant olive abaya">
         <img class="hero-campaign" src="assets/campaign-olive-v2.jpg" alt="Woman wearing a flowing olive abaya in warm architectural light" width="1152" height="1400" fetchpriority="high">
-        <div class="hero-caption"><span>Saam’s signature edit</span><small>Accra, Ghana</small></div>
       </div>
+      <div class="hero-shade" aria-hidden="true"></div>
       <div class="hero-copy">
-        <p class="eyebrow">The new season in Accra</p>
-        <h1>Modesty,<br><em>beautifully worn.</em></h1>
-        <p>Graceful silhouettes chosen for women who dress with intention.</p>
-        <div class="hero-cta"><a class="button dark" href="#shop">Explore the collection</a><a class="text-link" href="#about">Discover our story <span>↗</span></a></div>
+        <p class="eyebrow" data-hero-eyebrow>Modest fashion · Ghana</p>
+        <h1>Presence,<br><em>beautifully worn.</em></h1>
+        <p>Graceful silhouettes composed for women who move with quiet confidence.</p>
+        <div class="hero-cta"><a class="button hero-button" href="#new"><span data-hero-button>Shop new arrivals</span> <span>↗</span></a><a class="text-link" href="#collections">View the signature edit</a></div>
       </div>
+      <div class="hero-fashion-card" data-hero-card aria-hidden="true">
+        <div class="hero-card-photo"><img src="assets/campaign-olive-v2.jpg" alt=""></div>
+        <div class="hero-card-meta"><span>The Olive Edit</span><b>01 / 03</b></div>
+      </div>
+      <a class="hero-feature" href="#collections">
+        <span data-hero-feature-label>Featured collection</span><strong data-hero-feature-title>Olive Signature Edit</strong><small>Discover the story <b>→</b></small>
+      </a>
+      <div class="hero-index" aria-hidden="true"><i></i><span>01</span><i></i><span>03</span></div>
+      <p class="hero-scroll" aria-hidden="true">Scroll to discover <span>↓</span></p>
     </section>
 
     <section class="service-rail" aria-label="Shopping benefits"><span>Personal styling help</span><span>Delivery across Ghana</span><span>Secure online payment</span><a href="#size-guide">Find your size <b>↗</b></a></section>
