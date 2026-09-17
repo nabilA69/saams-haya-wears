@@ -42,6 +42,14 @@ const SEED = {
 };
 
 const clone = v => JSON.parse(JSON.stringify(v));
+const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const safeColor = (value, fallback = '#536034') => /^#[0-9a-f]{3,8}$/i.test(String(value || '')) ? String(value) : fallback;
+const safeImage = value => {
+  const raw = String(value || '').trim();
+  if (/^assets\/[a-z0-9._/-]+$/i.test(raw) || /^data:image\/(?:png|jpe?g|webp|gif);base64,[a-z0-9+/=]+$/i.test(raw)) return raw;
+  try { const parsed = new URL(raw, location.href); return parsed.protocol === 'https:' ? parsed.href : ''; }
+  catch { return ''; }
+};
 
 function normalise(data) {
   const d = Object.assign({ updatedAt: 0 }, clone(SEED), data || {});
@@ -195,18 +203,20 @@ function fillTokens(text, ctx) {
 }
 
 function designVars(d) {
+  const bg = safeColor(d.bg, '#a3441f');
+  const bg2 = safeColor(d.bg2, '');
   return [
-    `--deco-bg:${d.bg2 ? `linear-gradient(180deg,${d.bg},${d.bg2})` : d.bg}`,
-    `--deco-flat:${d.bg}`,
-    `--deco-fg:${d.fg}`,
-    `--deco-size:${d.size}px`,
-    `--deco-radius:${d.radius}px`,
-    `--deco-track:${(d.tracking || 0) / 100}em`,
+    `--deco-bg:${bg2 ? `linear-gradient(180deg,${bg},${bg2})` : bg}`,
+    `--deco-flat:${bg}`,
+    `--deco-fg:${safeColor(d.fg, '#ffffff')}`,
+    `--deco-size:${Math.min(40, Math.max(6, Number(d.size) || 9))}px`,
+    `--deco-radius:${Math.min(100, Math.max(0, Number(d.radius) || 0))}px`,
+    `--deco-track:${Math.min(1, Math.max(0, Number(d.tracking) || 0) / 100)}em`,
     `--deco-case:${d.uppercase ? 'uppercase' : 'none'}`,
-    `--tag-bg:${d.tagBg}`,
-    `--tag-fg:${d.tagFg}`,
-    `--price-color:${d.priceColor}`,
-    `--was-color:${d.wasColor}`
+    `--tag-bg:${safeColor(d.tagBg, '#a3441f')}`,
+    `--tag-fg:${safeColor(d.tagFg, '#ffffff')}`,
+    `--price-color:${safeColor(d.priceColor, '#a3441f')}`,
+    `--was-color:${safeColor(d.wasColor, '#98a08f')}`
   ].join(';');
 }
 
@@ -219,7 +229,7 @@ function priceTag(p, size = 'card', settings) {
   return `<span class="price-tag ${size === 'large' ? 'tag-lg' : ''}" style="${designVars(d)}">
     ${d.showWas ? `<s class="was">${money(p.compare)}</s>` : ''}
     <strong class="now">${money(p.price)}</strong>
-    ${d.showTag ? `<em class="tag-flag">${fillTokens(d.tagText, ctx)}</em>` : ''}
+    ${d.showTag ? `<em class="tag-flag">${escapeHtml(fillTokens(d.tagText, ctx))}</em>` : ''}
   </span>`;
 }
 
@@ -231,8 +241,10 @@ function saleSticker(p, settings) {
   if (!d.showSticker) return '';
   const ctx = { label: info.label, off: info.off, price: p.price, compare: p.compare };
   const [big, small] = fillTokens(d.stickerText, ctx).split('|');
-  const body = small !== undefined ? `<b>${big}</b><i>${small}</i>` : big;
-  return `<span class="sale-deco shape-${d.shape} pos-${d.position}${d.animate ? ' deco-animate' : ''}" style="${designVars(d)}">${body}</span>`;
+  const shapes = new Set(SHAPES.map(x => x.id));
+  const positions = new Set(POSITIONS.map(x => x.id));
+  const body = small !== undefined ? `<b>${escapeHtml(big)}</b><i>${escapeHtml(small)}</i>` : escapeHtml(big);
+  return `<span class="sale-deco shape-${shapes.has(d.shape) ? d.shape : 'chip'} pos-${positions.has(d.position) ? d.position : 'top-right'}${d.animate ? ' deco-animate' : ''}" style="${designVars(d)}">${body}</span>`;
 }
 
 const SALE_STYLES = Object.keys(DESIGN_DEFAULTS)
@@ -240,5 +252,6 @@ const SALE_STYLES = Object.keys(DESIGN_DEFAULTS)
 
 window.SHW = { SEED, STORE_KEYS, loadStore, readDraft, writeDraft, readSession, writeSession, normalise, clone,
   money, priceInfo, priceTag, saleSticker, SALE_STYLES,
-  DESIGN_DEFAULTS, SHAPES, POSITIONS, useSettings, allDesigns, designFor, isDesignEdited, fillTokens, designVars };
+  DESIGN_DEFAULTS, SHAPES, POSITIONS, useSettings, allDesigns, designFor, isDesignEdited, fillTokens, designVars,
+  escapeHtml, safeColor, safeImage };
 })();

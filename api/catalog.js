@@ -1,12 +1,14 @@
 const fs = require('node:fs/promises');
 const path = require('node:path');
 const { list, put } = require('@vercel/blob');
-const { isAuthenticated } = require('./_auth');
+const { isAuthenticated, isSameOrigin } = require('./_auth');
+const { sanitiseCatalogue } = require('./_catalog');
 
 const BLOB_PATH = 'catalog/current.json';
 
 async function starterCatalogue() {
-  return JSON.parse(await fs.readFile(path.join(process.cwd(), 'data', 'catalog.json'), 'utf8'));
+  const data = JSON.parse(await fs.readFile(path.join(process.cwd(), 'data', 'catalog.json'), 'utf8'));
+  return sanitiseCatalogue(data) || { updatedAt: 0, settings: {}, products: [] };
 }
 
 async function liveCatalogue() {
@@ -16,7 +18,9 @@ async function liveCatalogue() {
   if (!match) return starterCatalogue();
   const response = await fetch(match.url, { cache: 'no-store' });
   if (!response.ok) throw new Error('Cloud catalogue could not be read');
-  return response.json();
+  const data = sanitiseCatalogue(await response.json());
+  if (!data) throw new Error('Cloud catalogue is invalid');
+  return data;
 }
 
 module.exports = async function handler(req, res) {
@@ -26,12 +30,15 @@ module.exports = async function handler(req, res) {
     catch { return res.status(200).json(await starterCatalogue()); }
   }
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+  if (!isSameOrigin(req)) return res.status(403).json({ error: 'Request origin was rejected.' });
   if (!isAuthenticated(req)) return res.status(401).json({ error: 'Your owner session has expired.' });
   if (!process.env.BLOB_READ_WRITE_TOKEN) return res.status(503).json({ error: 'Cloud catalogue storage is not configured.' });
-  const data = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
-  if (!data || !Array.isArray(data.products) || data.products.length > 500 || typeof data.settings !== 'object') return res.status(400).json({ error: 'Invalid catalogue.' });
+  let parsed;
+  try { parsed = typeof req.body === 'string' ? JSON.parse(req.body) : req.body; }
+  catch { return res.status(400).json({ error: 'Catalogue JSON is invalid.' }); }
+  const data = sanitiseCatalogue(parsed);
+  if (!data) return res.status(400).json({ error: 'Invalid catalogue.' });
   data.updatedAt = Date.now();
-  delete data.settings.adminPin;
   const body = JSON.stringify(data);
   if (Buffer.byteLength(body) > 4_000_000) return res.status(413).json({ error: 'Catalogue is too large. Reduce the number or size of photos.' });
   await put(BLOB_PATH, body, { access: 'public', addRandomSuffix: false, allowOverwrite: true, contentType: 'application/json', cacheControlMaxAge: 0 });

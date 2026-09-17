@@ -3,7 +3,9 @@
     { "source": "/(.*)", "headers": [
       { "key": "X-Content-Type-Options", "value": "nosniff" },
       { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
-      { "key": "X-Frame-Options", "value": "DENY" }
+      { "key": "X-Frame-Options", "value": "DENY" },
+      { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=(), payment=(self)" },
+      { "key": "Content-Security-Policy", "value": "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self' https://wa.me; img-src 'self' data: https:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; script-src 'self' 'unsafe-inline' https://js.paystack.co https://accounts.google.com https://connect.facebook.net; connect-src 'self' https:; frame-src https://*.paystack.com https://accounts.google.com https://www.facebook.com; upgrade-insecure-requests" }
     ] },
     { "source": "/(admin|studio).html", "headers": [
       { "key": "Cache-Control", "value": "no-store, max-age=0" },

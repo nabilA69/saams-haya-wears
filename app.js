@@ -1,9 +1,13 @@
 /* Saam's Haya Wears — storefront */
-const { money, priceTag, saleSticker, priceInfo } = window.SHW;
+const { money, priceTag, saleSticker, priceInfo, escapeHtml: esc, safeColor, safeImage } = window.SHW;
 
 let DATA = { settings: {}, products: [] };
 let products = [];
-let cart = JSON.parse(localStorage.getItem('saams-haya-cart') || '[]');
+let cart = [];
+try {
+  const savedCart = JSON.parse(localStorage.getItem('saams-haya-cart') || '[]');
+  if (Array.isArray(savedCart)) cart = savedCart.slice(0, 100).map(x => ({ id: Number(x.id), size: String(x.size || '').slice(0, 30), qty: Math.min(20, Math.max(1, Number(x.qty) || 1)) }));
+} catch { localStorage.removeItem('saams-haya-cart'); }
 let activeFilter = 'All';
 let activeSearch = '';
 let activeSort = 'featured';
@@ -15,24 +19,25 @@ const waLink = text => `https://wa.me/${DATA.settings.whatsapp}?text=${encodeURI
 
 /* ---------------- rendering ---------------- */
 function artwork(p, cls) {
-  if (p.images && p.images[0]) return `<img class="${cls}-photo" src="${p.images[0]}" alt="${p.name}" loading="lazy">`;
+  const image = safeImage(p.images && p.images[0]);
+  if (image) return `<img class="${cls}-photo" src="${esc(image)}" alt="${esc(p.name)}" loading="lazy">`;
   return `<span class="hijab"></span>`;
 }
 
 function card(p) {
-  const photo = p.images && p.images[0];
+  const photo = safeImage(p.images && p.images[0]);
   return `<article class="product-card${photo ? ' has-photo' : ''}">
-    <div class="product-image" data-id="${p.id}" tabindex="0" role="button" aria-label="View ${p.name}"
-         style="--card-bg:${p.bg};--garment:${p.color};--garment-dark:${p.dark}">
-      ${p.badge ? `<span class="product-badge">${p.badge}</span>` : ''}
+    <div class="product-image" data-id="${Number(p.id)}" tabindex="0" role="button" aria-label="View ${esc(p.name)}"
+         style="--card-bg:${safeColor(p.bg, '#d8c8ab')};--garment:${safeColor(p.color)};--garment-dark:${safeColor(p.dark, '#34401f')}">
+      ${p.badge ? `<span class="product-badge">${esc(p.badge)}</span>` : ''}
       ${saleSticker(p)}
       ${artwork(p, 'card')}
-      <button class="quick-add" data-id="${p.id}">Quick add</button>
+      <button class="quick-add" data-id="${Number(p.id)}">Quick add</button>
     </div>
     <div class="product-info">
-      <h3>${p.name}</h3>
-      <div class="product-meta">${priceTag(p)}<span>${p.category}</span>
-        <div class="swatches" aria-label="Available colours"><i style="background:${p.color}"></i><i style="background:${p.dark}"></i></div>
+      <h3>${esc(p.name)}</h3>
+      <div class="product-meta">${priceTag(p)}<span>${esc(p.category)}</span>
+        <div class="swatches" aria-label="Available colours"><i style="background:${safeColor(p.color)}"></i><i style="background:${safeColor(p.dark, '#34401f')}"></i></div>
       </div>
     </div>
   </article>`;
@@ -52,10 +57,10 @@ function render() {
 function renderFilters() {
   const cats = DATA.settings.categories || [];
   $('.filters').innerHTML = ['All', ...cats]
-    .map(c => `<button type="button" class="${c === activeFilter ? 'active' : ''}" data-filter="${c}" aria-pressed="${c === activeFilter}">${c}</button>`).join('');
+    .map(c => `<button type="button" class="${c === activeFilter ? 'active' : ''}" data-filter="${esc(c)}" aria-pressed="${c === activeFilter}">${esc(c)}</button>`).join('');
   $$('.filters button').forEach(b => b.onclick = () => { setFilter(b.dataset.filter, true); });
-  $('.nav-cats').innerHTML = cats.map(c => `<a href="#shop" data-filter-link="${c}"><span>${c}</span></a>`).join('');
-  $('.menu-chips').innerHTML = cats.map(c => `<a href="#shop" data-filter-link="${c}">${c}</a>`).join('');
+  $('.nav-cats').innerHTML = cats.map(c => `<a href="#shop" data-filter-link="${esc(c)}"><span>${esc(c)}</span></a>`).join('');
+  $('.menu-chips').innerHTML = cats.map(c => `<a href="#shop" data-filter-link="${esc(c)}">${esc(c)}</a>`).join('');
   bindFilterLinks();
 }
 
@@ -117,21 +122,21 @@ function bindFilterLinks() {
 function openProduct(id) {
   const p = byId(id), d = $('.product-dialog');
   const gallery = (p.images && p.images.length)
-    ? `<div class="detail-gallery"><img class="detail-photo" src="${p.images[0]}" alt="${p.name}">
+    ? `<div class="detail-gallery"><img class="detail-photo" src="${esc(safeImage(p.images[0]))}" alt="${esc(p.name)}">
         ${p.images.length > 1 ? `<div class="thumbs">${p.images.map((src, i) =>
-          `<button class="${i === 0 ? 'on' : ''}" data-src="${src}"><img src="${src}" alt=""></button>`).join('')}</div>` : ''}</div>`
-    : `<div class="detail-image" style="--card-bg:${p.bg};--garment:${p.color}"></div>`;
+          `<button class="${i === 0 ? 'on' : ''}" data-src="${esc(safeImage(src))}"><img src="${esc(safeImage(src))}" alt=""></button>`).join('')}</div>` : ''}</div>`
+    : `<div class="detail-image" style="--card-bg:${safeColor(p.bg, '#d8c8ab')};--garment:${safeColor(p.color)}"></div>`;
   d.querySelector('.dialog-content').innerHTML = `${gallery}
     <div class="detail-copy">
-      <p class="eyebrow">${p.category}</p>
-      <h2>${p.name}</h2>
+      <p class="eyebrow">${esc(p.category)}</p>
+      <h2>${esc(p.name)}</h2>
       <div class="detail-price">${priceTag(p, 'large')}</div>
-      <p class="detail-description">${p.desc || ''}</p>
+      <p class="detail-description">${esc(p.desc || '')}</p>
       <p class="option-label">Select size</p>
-      <div class="option-row">${p.sizes.map((s, i) => `<button class="${i === 0 ? 'selected' : ''}" data-size="${s}">${s}</button>`).join('')}</div>
-      <p class="stock-note">● ${p.stock || 'In stock'} · Ready for nationwide delivery</p>
+      <div class="option-row">${p.sizes.map((s, i) => `<button class="${i === 0 ? 'selected' : ''}" data-size="${esc(s)}">${esc(s)}</button>`).join('')}</div>
+      <p class="stock-note">● ${esc(p.stock || 'In stock')} · Ready for nationwide delivery</p>
       <button class="button dark detail-add">Add to bag</button>
-      <a class="detail-ask" href="#" data-ask="${p.name}">Ask about this piece on WhatsApp</a>
+      <a class="detail-ask" href="#">Ask about this piece on WhatsApp</a>
     </div>`;
   d.querySelectorAll('.option-row button').forEach(b => b.onclick = () => {
     d.querySelectorAll('.option-row button').forEach(x => x.classList.remove('selected'));
@@ -173,13 +178,13 @@ function renderCart() {
   $('.checkout-total strong').textContent = money(total);
   items.innerHTML = cart.map((x, i) => {
     const p = byId(x.id);
-    const photo = p.images && p.images[0];
+    const photo = safeImage(p.images && p.images[0]);
     return `<article class="cart-item">
-      <div class="cart-thumb${photo ? ' has-photo' : ''}" style="--card-bg:${p.bg};--garment:${p.color}">${photo ? `<img src="${photo}" alt="">` : ''}</div>
-      <div><h3>${p.name}</h3><p>Size ${x.size} · ${money(p.price)}</p>
+      <div class="cart-thumb${photo ? ' has-photo' : ''}" style="--card-bg:${safeColor(p.bg, '#d8c8ab')};--garment:${safeColor(p.color)}">${photo ? `<img src="${esc(photo)}" alt="">` : ''}</div>
+      <div><h3>${esc(p.name)}</h3><p>Size ${esc(x.size)} · ${money(p.price)}</p>
         <div class="qty"><button data-action="minus" data-index="${i}" aria-label="Decrease quantity">−</button><span>${x.qty}</span><button data-action="plus" data-index="${i}" aria-label="Increase quantity">+</button></div>
       </div>
-      <button class="remove-item" data-index="${i}" aria-label="Remove ${p.name}">×</button>
+      <button class="remove-item" data-index="${i}" aria-label="Remove ${esc(p.name)}">×</button>
     </article>`;
   }).join('');
   $('.cart-empty').hidden = cart.length > 0;
@@ -258,7 +263,7 @@ function applySettings() {
   $('.ann-two').textContent = s.announcementTwo || '';
   $('.dot').hidden = !(s.announcement && s.announcementTwo);
   const [line1, em, line2] = (s.heroTitle || '').split('|');
-  if (line1) $('.hero h1').innerHTML = `${line1}<br><em>${em || ''}</em>${line2 || ''}`;
+  if (line1) $('.hero h1').innerHTML = `${esc(line1)}<br><em>${esc(em || '')}</em>${esc(line2 || '')}`;
   const heroText = $('.hero-copy > p:not(.eyebrow)');
   if (heroText && s.heroText) heroText.textContent = s.heroText;
   const heroEyebrow = $('[data-hero-eyebrow]');
@@ -269,7 +274,8 @@ function applySettings() {
   if (featureLabel && s.heroFeaturedLabel) featureLabel.textContent = s.heroFeaturedLabel;
   const featureTitle = $('[data-hero-feature-title]');
   if (featureTitle && s.heroFeaturedTitle) featureTitle.textContent = s.heroFeaturedTitle;
-  if (s.heroImage) $$('.hero-campaign, .hero-card-photo img').forEach(img => { img.src = s.heroImage; });
+  const heroImage = safeImage(s.heroImage);
+  if (heroImage) $$('.hero-campaign, .hero-card-photo img').forEach(img => { img.src = heroImage; });
   $$('[data-wa-help]').forEach(a => { a.href = waLink(s.whatsappHelpText || 'Hello!'); a.target = '_blank'; a.rel = 'noopener'; });
   const phone = $('footer a[href^="tel:"]');
   if (phone && s.phone) { phone.href = 'tel:' + s.phone.replace(/\s/g, ''); phone.textContent = s.phone; }
@@ -311,8 +317,8 @@ function renderAccount() {
     $('.account-hello').textContent = `Hello, ${customer.firstName}`;
     const rows = [['Name', `${customer.firstName} ${customer.lastName || ''}`.trim()], ['Email', customer.email],
                   ['Phone', customer.phone], ['Delivery', customer.address]].filter(r => r[1]);
-    $('.account-details').innerHTML = rows.map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join('') +
-      (customer.via ? `<div><dt>Saved via</dt><dd>${customer.via}</dd></div>` : '');
+    $('.account-details').innerHTML = rows.map(([k, v]) => `<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join('') +
+      (customer.via ? `<div><dt>Saved via</dt><dd>${esc(customer.via)}</dd></div>` : '');
   }
   // social buttons only offer what the owner has actually connected
   $$('.social-btn').forEach(b => {

@@ -31,4 +31,15 @@ function sessionCookie(token) {
 }
 function clearCookie() { return `${COOKIE}=; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=0`; }
 
-module.exports = { createToken, isAuthenticated, safeEqual, sessionCookie, clearCookie };
+function isSameOrigin(req) {
+  const origin = req.headers.origin;
+  if (!origin) return false;
+  try {
+    const url = new URL(origin);
+    const forwardedHost = String(req.headers['x-forwarded-host'] || req.headers.host || '').split(',')[0].trim();
+    const forwardedProto = String(req.headers['x-forwarded-proto'] || 'https').split(',')[0].trim();
+    return url.host === forwardedHost && url.protocol === `${forwardedProto}:`;
+  } catch { return false; }
+}
+
+module.exports = { createToken, isAuthenticated, isSameOrigin, safeEqual, sessionCookie, clearCookie };

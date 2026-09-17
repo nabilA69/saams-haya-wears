@@ -3,5 +3,9 @@
   "private": true,
   "version": "1.0.0",
   "engines": { "node": ">=20" },
+  "scripts": {
+    "test": "node --test test/*.test.js",
+    "check": "npm test && node --check app.js && node --check store.js && node --check admin.js && node --check login.js"
+  },
   "dependencies": { "@vercel/blob": "^2.0.0" }
 }
