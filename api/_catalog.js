@@ -13,6 +13,11 @@ function url(value, { image = false } = {}) {
   if (/^assets\/[a-z0-9._/-]+$/i.test(raw)) return raw;
   try {
     const parsed = new URL(raw);
+    if (image && parsed.protocol === 'https:') {
+      const isBlob = parsed.hostname.endsWith('.public.blob.vercel-storage.com');
+      const isImageFile = /\.(?:png|jpe?g|webp|gif|avif)$/i.test(parsed.pathname);
+      if (!isBlob && !isImageFile) return '';
+    }
     return parsed.protocol === 'https:' ? parsed.href.slice(0, 2048) : '';
   } catch { return ''; }
 }

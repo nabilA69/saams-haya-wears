@@ -276,13 +276,45 @@ function readImage(file) {
   });
 }
 
+async function persistImage(data) {
+  if (!String(data || '').startsWith('data:image/') || location.hostname === 'localhost' || location.hostname === '127.0.0.1') return data;
+  const response = await fetch('/api/admin/image', {
+    method: 'POST', credentials: 'same-origin',
+    headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ data })
+  });
+  const result = await response.json().catch(() => ({}));
+  if (response.status === 401) { location.href = '/admin.html'; throw new Error('Owner session expired.'); }
+  if (!response.ok || !result.url) throw new Error(result.error || 'Photo upload failed.');
+  return result.url;
+}
+
+async function migrateDraftImages() {
+  const pending = [];
+  DATA.products.forEach(product => product.images.forEach((src, index) => {
+    if (String(src || '').startsWith('data:image/')) pending.push(persistImage(src).then(url => { product.images[index] = url; }));
+  }));
+  if (String(DATA.settings.heroImage || '').startsWith('data:image/')) {
+    pending.push(persistImage(DATA.settings.heroImage).then(url => { DATA.settings.heroImage = url; }));
+  }
+  if (pending.length) {
+    toast(`Uploading ${pending.length} saved photo${pending.length === 1 ? '' : 's'}…`);
+    await Promise.all(pending);
+    save('Photos uploaded securely');
+  }
+}
+
 async function addFiles(files) {
   const list = [...files].filter(f => f.type.startsWith('image/'));
   if (!list.length) return;
   toast(`Processing ${list.length} photo${list.length === 1 ? '' : 's'}…`);
   for (const f of list) {
     const data = await readImage(f);
-    if (data) editing.images.push(data);
+    if (data) {
+      try {
+        toast('Uploading photo securely…');
+        editing.images.push(await persistImage(data));
+      } catch (error) { toast(error.message || 'Photo upload failed'); }
+    }
   }
   renderThumbs();
   renderPreview();
@@ -608,7 +640,8 @@ $('#hero-image-file').onchange = async e => {
   const image = await readImage(file);
   e.target.value = '';
   if (!image) return toast('That image could not be read');
-  DATA.settings.heroImage = image;
+  try { DATA.settings.heroImage = await persistImage(image); }
+  catch (error) { return toast(error.message || 'Campaign image upload failed'); }
   save('Campaign image saved');
   renderLandingPreview();
   toast('Landing image updated');
@@ -668,6 +701,7 @@ $('#publish-live').onclick = async () => {
   button.disabled = true;
   button.textContent = 'Publishing…';
   try {
+    await migrateDraftImages();
     const response = await fetch('/api/catalog', {
       method: 'POST', credentials: 'same-origin',
       headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(DATA)

@@ -24,6 +24,23 @@ function artwork(p, cls) {
   return `<span class="hijab"></span>`;
 }
 
+function installImageFallbacks(root = document) {
+  root.querySelectorAll('.product-image img, .cart-thumb img, .detail-gallery img').forEach(img => {
+    const recover = () => {
+      const card = img.closest('.product-card');
+      if (card) card.classList.remove('has-photo');
+      const imageBox = img.closest('.product-image');
+      if (imageBox && !imageBox.querySelector('.hijab')) {
+        const fallback = document.createElement('span');
+        fallback.className = 'hijab';
+        img.replaceWith(fallback);
+      } else img.remove();
+    };
+    img.addEventListener('error', recover, { once: true });
+    if (img.complete && !img.naturalWidth) recover();
+  });
+}
+
 function card(p) {
   const photo = safeImage(p.images && p.images[0]);
   return `<article class="product-card${photo ? ' has-photo' : ''}">
@@ -50,6 +67,7 @@ function render() {
   const onSale = products.filter(p => priceInfo(p).on);
   $('#sale-rail').hidden = onSale.length === 0;
   $('#sale-grid').innerHTML = onSale.slice(0, 8).map(card).join('');
+  installImageFallbacks();
   renderFilters();
   renderShop();
 }
@@ -95,6 +113,7 @@ function renderShop() {
   if (activeSort === 'newest') list.sort((a, b) => Number(b.new) - Number(a.new));
   if (activeSort === 'sale') list.sort((a, b) => priceInfo(b).off - priceInfo(a).off);
   $('#shop-grid').innerHTML = list.length ? list.map(card).join('') : '<p class="empty-note">No pieces found. Try another search.</p>';
+  installImageFallbacks($('#shop-grid'));
   $('.result-count').textContent = `${list.length} piece${list.length === 1 ? '' : 's'}`;
   bindCards();
 }
@@ -138,6 +157,7 @@ function openProduct(id) {
       <button class="button dark detail-add">Add to bag</button>
       <a class="detail-ask" href="#">Ask about this piece on WhatsApp</a>
     </div>`;
+  installImageFallbacks(d);
   d.querySelectorAll('.option-row button').forEach(b => b.onclick = () => {
     d.querySelectorAll('.option-row button').forEach(x => x.classList.remove('selected'));
     b.classList.add('selected');
@@ -187,6 +207,7 @@ function renderCart() {
       <button class="remove-item" data-index="${i}" aria-label="Remove ${esc(p.name)}">×</button>
     </article>`;
   }).join('');
+  installImageFallbacks(items);
   $('.cart-empty').hidden = cart.length > 0;
   $('.cart-summary').hidden = cart.length === 0;
   items.querySelectorAll('[data-action]').forEach(b => b.onclick = () => {
