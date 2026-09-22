@@ -141,9 +141,14 @@ function bindFilterLinks() {
 function openProduct(id) {
   const p = byId(id), d = $('.product-dialog');
   const gallery = (p.images && p.images.length)
-    ? `<div class="detail-gallery"><img class="detail-photo" src="${esc(safeImage(p.images[0]))}" alt="${esc(p.name)}">
-        ${p.images.length > 1 ? `<div class="thumbs">${p.images.map((src, i) =>
-          `<button class="${i === 0 ? 'on' : ''}" data-src="${esc(safeImage(src))}"><img src="${esc(safeImage(src))}" alt=""></button>`).join('')}</div>` : ''}</div>`
+    ? `<div class="detail-gallery" aria-label="${esc(p.name)} image gallery">
+        <div class="detail-track" tabindex="0">${p.images.map((src, i) =>
+          `<div class="detail-slide"><img class="detail-photo" src="${esc(safeImage(src))}" alt="${esc(p.name)} — view ${i + 1} of ${p.images.length}" loading="${i ? 'lazy' : 'eager'}"></div>`).join('')}</div>
+        ${p.images.length > 1 ? `<button class="gallery-arrow gallery-prev" aria-label="Previous product image">←</button>
+          <button class="gallery-arrow gallery-next" aria-label="Next product image">→</button>
+          <div class="gallery-status" aria-live="polite"><span>1</span> / ${p.images.length}</div>
+          <div class="gallery-dots" aria-label="Choose product image">${p.images.map((_, i) =>
+            `<button class="gallery-dot" aria-label="Show image ${i + 1}" aria-current="${i === 0 ? 'true' : 'false'}" data-index="${i}"></button>`).join('')}</div>` : ''}</div>`
     : `<div class="detail-image" style="--card-bg:${safeColor(p.bg, '#d8c8ab')};--garment:${safeColor(p.color)}"></div>`;
   d.querySelector('.dialog-content').innerHTML = `${gallery}
     <div class="detail-copy">
@@ -162,11 +167,36 @@ function openProduct(id) {
     d.querySelectorAll('.option-row button').forEach(x => x.classList.remove('selected'));
     b.classList.add('selected');
   });
-  d.querySelectorAll('.thumbs button').forEach(b => b.onclick = () => {
-    d.querySelectorAll('.thumbs button').forEach(x => x.classList.remove('on'));
-    b.classList.add('on');
-    d.querySelector('.detail-photo').src = b.dataset.src;
-  });
+  const track = d.querySelector('.detail-track');
+  if (track && p.images.length > 1) {
+    const dots = [...d.querySelectorAll('.gallery-dots button')];
+    const status = d.querySelector('.gallery-status span');
+    const prev = d.querySelector('.gallery-prev');
+    const next = d.querySelector('.gallery-next');
+    let active = 0, scrollFrame;
+    const update = (index, scroll = true) => {
+      active = Math.max(0, Math.min(p.images.length - 1, index));
+      dots.forEach((dot, i) => dot.setAttribute('aria-current', String(i === active)));
+      status.textContent = active + 1;
+      prev.disabled = active === 0;
+      next.disabled = active === p.images.length - 1;
+      if (scroll) track.scrollTo({ left: track.clientWidth * active, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+    };
+    dots.forEach(dot => dot.onclick = () => update(+dot.dataset.index));
+    prev.onclick = () => update(active - 1);
+    next.onclick = () => update(active + 1);
+    track.addEventListener('scroll', () => {
+      cancelAnimationFrame(scrollFrame);
+      scrollFrame = requestAnimationFrame(() => update(Math.round(track.scrollLeft / Math.max(1, track.clientWidth)), false));
+    }, { passive: true });
+    track.addEventListener('keydown', event => {
+      if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+        event.preventDefault();
+        update(active + (event.key === 'ArrowRight' ? 1 : -1));
+      }
+    });
+    update(0, false);
+  }
   d.querySelector('.detail-ask').onclick = e => {
     e.preventDefault();
     window.open(waLink(`Hello Saam's Haya Wears, I'd like to know more about the ${p.name}.`), '_blank', 'noopener');
