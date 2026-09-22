@@ -2,7 +2,7 @@
 (function () {
   const reduce = matchMedia('(prefers-reduced-motion: reduce)');
   const finePointer = matchMedia('(hover: hover) and (pointer: fine)');
-  const selector = 'button:not([disabled]), a[href]:not(.wa-float), label.pay-method, .product-image[role="button"]';
+  const selector = 'button:not([disabled]):not(.dialog-close):not(.drawer-close):not(.search-close):not(.remove-item), a[href]:not(.wa-float), label.pay-method, .product-image[role="button"]';
 
   const hero = document.querySelector('[data-hero-depth]');
   if (hero) {

@@ -1,6 +1,9 @@
 /* Taste-led public landing page refinement. Admin and checkout remain unchanged. */
 :root{--paper:#f7f5ef;--forest:#182617;--moss:#46552b;--brass:#b9943f;--mist:#e9e7de}
 body{background:var(--paper)}
+.product-dialog>.dialog-close{position:absolute;top:14px;right:14px;left:auto;width:46px;height:46px;padding:0;display:grid;place-items:center;border:1px solid rgba(24,38,23,.18);border-radius:50%;background:rgba(247,245,239,.96);color:var(--forest);font:400 31px/1 var(--sans);box-shadow:0 8px 24px rgba(15,25,14,.18);z-index:20;transform:none;overflow:visible;isolation:auto;cursor:pointer}
+.product-dialog>.dialog-close:hover{background:var(--forest);color:#fff;border-color:var(--forest);box-shadow:0 10px 28px rgba(15,25,14,.28)}
+.product-dialog>.dialog-close:focus-visible{outline:3px solid var(--brass);outline-offset:3px}
 .announcement{height:32px;background:var(--forest);font-size:10px;letter-spacing:.13em}
 .site-header{height:76px;padding:0 clamp(18px,4vw,64px);background:rgba(247,245,239,.92);border-color:rgba(24,38,23,.14)}
 .editorial-wordmark strong{font-size:clamp(24px,2vw,32px);letter-spacing:-.035em}
@@ -54,6 +57,7 @@ body{background:var(--paper)}
   .products-section .product-grid{grid-template-columns:repeat(2,1fr)}.products-section .product-card:first-child{transform:none}
 }
 @media(max-width:650px){
+  .product-dialog>.dialog-close{top:10px;right:10px;width:48px;height:48px;background:rgba(247,245,239,.98)}
   .announcement{height:31px;letter-spacing:.08em}.site-header{height:70px}.editorial-wordmark strong{font-size:24px}.editorial-wordmark small{font-size:7px}
   .mobile-menu,.search-panel{top:101px}.hero-copy{padding:58px 22px 52px}.hero h1{font-size:clamp(52px,17vw,72px);margin:17px 0 23px}.hero-copy>p:not(.eyebrow){font-size:14px}.hero-cta{align-items:stretch;gap:20px}.hero-cta .text-link{width:max-content}.hero-art{min-height:63svh}.hero-caption span{font-size:17px}
   .service-rail{font-size:8px;letter-spacing:.09em}.service-rail>*{padding:16px 10px}.section{padding:76px 18px}.section-heading{padding-bottom:16px}.product-grid,.products-section .product-grid{gap:12px}.product-info h3{font-size:17px}
