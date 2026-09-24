@@ -1,5 +1,5 @@
 {
-  "updatedAt": 0,
+  "updatedAt": 1790282062361,
   "settings": {
     "whatsapp": "233557896248",
     "whatsappHelpText": "Hello Saam's Haya Wears, I'd like some help.",
@@ -18,6 +18,7 @@
     "heroImage": "assets/campaign-olive-v2.jpg",
     "categories": [
       "Abayas",
+      "Dresses",
       "Khimars",
       "Sets",
       "Accessories"
@@ -26,219 +27,215 @@
   "products": [
     {
       "id": 1,
-      "images": [],
-      "sizes": [
-        "52",
-        "54",
-        "56",
-        "58"
+      "name": "Amira Satin Maxi Dress",
+      "category": "Dresses",
+      "price": 380,
+      "images": [
+        "assets/products/amira-satin-maxi.jpg"
       ],
+      "sizes": [
+        "M",
+        "L",
+        "XL",
+        "2XL",
+        "3XL"
+      ],
+      "badge": "4 colours",
+      "stock": "In stock",
+      "color": "#b4c62c",
+      "dark": "#1d1d1d",
+      "bg": "#e2dcd0",
+      "new": true,
+      "best": true,
+      "desc": "A fluid satin maxi with a buttoned placket, stand collar and softly gathered puff sleeves, falling to a deep tiered hem. Available in lime, white, black and rose.",
       "compare": 0,
       "active": true,
-      "stock": "In stock",
-      "color": "#536034",
-      "dark": "#34401f",
-      "bg": "#d8c8ab",
-      "name": "Afiya Pleated Abaya",
-      "category": "Abayas",
-      "price": 420,
       "sale": {
         "on": false,
         "style": "classic",
         "label": "Sale"
-      },
-      "badge": "New",
-      "desc": "A graceful everyday abaya with soft pleating through the skirt and an easy, fluid drape.",
-      "new": true,
-      "best": true
+      }
     },
     {
       "id": 2,
-      "images": [],
+      "name": "Jameela Cape Abaya",
+      "category": "Abayas",
+      "price": 520,
+      "images": [
+        "assets/products/jameela-cape-abaya.jpg"
+      ],
       "sizes": [
         "54",
         "56",
         "58",
         "60"
       ],
+      "badge": "Occasion",
+      "stock": "In stock",
+      "color": "#f1eee7",
+      "dark": "#d6cfc1",
+      "bg": "#ddd7cb",
+      "new": true,
+      "best": false,
+      "desc": "A quietly dramatic ivory abaya with a full draped cape falling from the shoulder over a straight column skirt. Made for weddings, Eid and evening occasions.",
       "compare": 0,
       "active": true,
-      "stock": "In stock",
-      "color": "#292c27",
-      "dark": "#171a17",
-      "bg": "#b7a895",
-      "name": "Nura Embroidered Abaya",
-      "category": "Abayas",
-      "price": 495,
       "sale": {
         "on": false,
         "style": "classic",
         "label": "Sale"
-      },
-      "badge": "Limited",
-      "desc": "A refined black abaya finished with delicate tonal embroidery at the cuffs and neckline.",
-      "new": true,
-      "best": false
+      }
     },
     {
       "id": 3,
-      "images": [],
+      "name": "Salma Belted Coat Dress",
+      "category": "Dresses",
+      "price": 450,
+      "images": [
+        "assets/products/salma-belted-coat-dress.jpg"
+      ],
       "sizes": [
         "S",
         "M",
         "L",
         "XL"
       ],
+      "badge": "New",
+      "stock": "In stock",
+      "color": "#b7a1e2",
+      "dark": "#8d74c7",
+      "bg": "#e7e1f3",
+      "new": true,
+      "best": false,
+      "desc": "A tailored lilac coat dress with a shawl collar, wrapped bodice and a belted waist that ties into a bow at the back, opening into a full pleated skirt.",
       "compare": 0,
       "active": true,
-      "stock": "In stock",
-      "color": "#9a7352",
-      "dark": "#79543a",
-      "bg": "#d8c6b6",
-      "name": "Sahara Two-Piece Set",
-      "category": "Sets",
-      "price": 460,
       "sale": {
         "on": false,
         "style": "classic",
         "label": "Sale"
-      },
-      "badge": "New",
-      "desc": "An effortless longline tunic and wide-leg trouser pairing in a warm, earthy neutral.",
-      "new": true,
-      "best": true
+      }
     },
     {
       "id": 4,
-      "images": [],
+      "name": "Rahma Pearl-Collar Abaya",
+      "category": "Abayas",
+      "price": 560,
+      "images": [
+        "assets/products/rahma-pearl-collar-abaya.jpg"
+      ],
       "sizes": [
-        "52",
         "54",
         "56",
         "58",
         "60"
       ],
+      "badge": "3 colours",
+      "stock": "In stock",
+      "color": "#2f4577",
+      "dark": "#1b2647",
+      "bg": "#ded9e6",
+      "new": true,
+      "best": true,
+      "desc": "A draped abaya finished with a pearl-beaded collar and scalloped cuffs, gathered softly at one hip. Comes in lilac, royal blue and deep navy.",
       "compare": 0,
       "active": true,
-      "stock": "In stock",
-      "color": "#6e493a",
-      "dark": "#503125",
-      "bg": "#cab4a3",
-      "name": "Mariam Butterfly Abaya",
-      "category": "Abayas",
-      "price": 440,
       "sale": {
         "on": false,
         "style": "classic",
         "label": "Sale"
-      },
-      "badge": "",
-      "desc": "A beautifully generous butterfly cut designed for movement, coverage and occasion-ready ease.",
-      "new": true,
-      "best": false
+      }
     },
     {
       "id": 5,
-      "images": [],
-      "sizes": [
-        "One size"
+      "name": "Hawa Pinafore Maxi",
+      "category": "Dresses",
+      "price": 390,
+      "images": [
+        "assets/products/hawa-pinafore-maxi.jpg"
       ],
+      "sizes": [
+        "S",
+        "M",
+        "L",
+        "XL"
+      ],
+      "badge": "",
+      "stock": "In stock",
+      "color": "#4b4b4d",
+      "dark": "#2f2f31",
+      "bg": "#ded9d1",
+      "new": true,
+      "best": false,
+      "desc": "A charcoal pinafore maxi with a pointed bib, defined waist and deep box pleats through the skirt. Shown layered over a crisp white shirt.",
       "compare": 0,
       "active": true,
-      "stock": "In stock",
-      "color": "#5c6545",
-      "dark": "#414a2e",
-      "bg": "#d1c9b8",
-      "name": "Layla Layered Khimar",
-      "category": "Khimars",
-      "price": 185,
       "sale": {
         "on": false,
         "style": "classic",
         "label": "Sale"
-      },
-      "badge": "Best seller",
-      "desc": "A lightweight, layered khimar with an elegant curved hem and comfortable face opening.",
-      "new": false,
-      "best": true
+      }
     },
     {
       "id": 6,
-      "images": [],
-      "sizes": [
-        "S/M",
-        "L/XL"
+      "name": "Aisha Printed Skirt Set",
+      "category": "Sets",
+      "price": 340,
+      "images": [
+        "assets/products/aisha-printed-skirt-set.jpg"
       ],
+      "sizes": [
+        "S",
+        "M",
+        "L",
+        "XL"
+      ],
+      "badge": "",
+      "stock": "In stock",
+      "color": "#a8559b",
+      "dark": "#7c3a72",
+      "bg": "#e8dae9",
+      "new": true,
+      "best": false,
+      "desc": "A two-piece set pairing an orchid blouse with a stand collar and full bishop sleeves, worn with a matching swirl-print skirt that moves beautifully.",
       "compare": 0,
       "active": true,
-      "stock": "In stock",
-      "color": "#b69d83",
-      "dark": "#8c725a",
-      "bg": "#e1d9cf",
-      "name": "Zahra Prayer Set",
-      "category": "Sets",
-      "price": 285,
       "sale": {
         "on": false,
         "style": "classic",
         "label": "Sale"
-      },
-      "badge": "",
-      "desc": "A soft two-piece prayer set offering full coverage with a calm, breathable feel.",
-      "new": false,
-      "best": true
+      }
     },
     {
       "id": 7,
-      "images": [],
+      "name": "Khadija Pleated Abaya",
+      "category": "Abayas",
+      "price": 620,
+      "images": [
+        "assets/products/khadija-pleated-abaya-navy.jpg",
+        "assets/products/khadija-pleated-abaya-mocha.jpg"
+      ],
       "sizes": [
         "54",
         "56",
-        "58"
+        "58",
+        "60"
       ],
-      "compare": 0,
-      "active": true,
-      "stock": "In stock",
-      "color": "#263d36",
-      "dark": "#172a25",
-      "bg": "#aebbb4",
-      "name": "Medina Satin Abaya",
-      "category": "Abayas",
-      "price": 520,
-      "sale": {
-        "on": false,
-        "style": "classic",
-        "label": "Sale"
-      },
       "badge": "Occasion",
-      "desc": "Subtle lustre and a fluid cut make Medina a polished choice for evenings and special moments.",
-      "new": false,
-      "best": true
-    },
-    {
-      "id": 8,
-      "images": [],
-      "sizes": [
-        "One size"
-      ],
+      "stock": "In stock",
+      "color": "#1f2a4d",
+      "dark": "#9d8071",
+      "bg": "#dcd5cd",
+      "new": true,
+      "best": true,
+      "desc": "Knife pleats fall from a crystal-embellished yoke into wide bell sleeves and a full sweep. A statement piece, in navy or mocha.",
       "compare": 0,
       "active": true,
-      "stock": "In stock",
-      "color": "#8e755f",
-      "dark": "#6c5747",
-      "bg": "#d7ccbf",
-      "name": "Essential Jersey Hijab",
-      "category": "Accessories",
-      "price": 85,
       "sale": {
         "on": false,
         "style": "classic",
         "label": "Sale"
-      },
-      "badge": "Everyday",
-      "desc": "Soft, non-slip premium jersey with just the right stretch for effortless everyday styling.",
-      "new": false,
-      "best": false
+      }
     }
   ]
 }
