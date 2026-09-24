@@ -72,8 +72,10 @@ function readDraft() {
   catch { return null; }
 }
 
-function writeDraft(data) {
-  data.updatedAt = Date.now();
+/* touch:false is used straight after a successful publish, so recording what is
+   now live does not itself mark the draft as newer than the published version. */
+function writeDraft(data, { touch = true } = {}) {
+  if (touch) data.updatedAt = Date.now();
   try {
     localStorage.setItem(STORE_KEYS.draft, JSON.stringify(data));
     return { ok: true, data };
@@ -98,17 +100,26 @@ function writeSession(v) {
   try { v === null ? sessionStorage.removeItem(STORE_KEYS.session) : sessionStorage.setItem(STORE_KEYS.session, v); } catch { /* ignore */ }
 }
 
-async function loadStore() {
+const isLocalHost = () => location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+
+/* The local draft is the owner's unpublished work. The STOREFRONT must never read
+   it: if it did, the owner would see their own draft while every other visitor saw
+   the published catalogue, so failing to publish would look like success. The
+   studio passes draft:true to preview unpublished work; the storefront does not.
+   On localhost there is no publish API, so the draft is the only catalogue there. */
+async function loadStore({ draft: useDraft = false } = {}) {
   let published = null;
   try {
     const remote = location.protocol === 'https:' ? '/api/catalog' : 'data/catalog.json';
     const res = await fetch(remote, { cache: 'no-store' });
     if (res.ok) published = await res.json();
   } catch { /* opened from file:// or not published yet */ }
-  const draft = readDraft();
+  const draft = (useDraft || isLocalHost()) ? readDraft() : null;
   let chosen = published || null;
   if (draft && (!published || (draft.updatedAt || 0) > (published.updatedAt || 0))) chosen = draft;
-  return normalise(chosen);
+  const data = normalise(chosen);
+  data.publishedAt = Number(published && published.updatedAt) || 0;
+  return data;
 }
 
 /* ---- pricing helpers shared by storefront and admin ---- */
@@ -250,7 +261,7 @@ function saleSticker(p, settings) {
 const SALE_STYLES = Object.keys(DESIGN_DEFAULTS)
   .map(id => ({ id, name: DESIGN_DEFAULTS[id].name, hint: DESIGN_DEFAULTS[id].hint }));
 
-window.SHW = { SEED, STORE_KEYS, loadStore, readDraft, writeDraft, readSession, writeSession, normalise, clone,
+window.SHW = { SEED, STORE_KEYS, loadStore, isLocalHost, readDraft, writeDraft, readSession, writeSession, normalise, clone,
   money, priceInfo, priceTag, saleSticker, SALE_STYLES,
   DESIGN_DEFAULTS, SHAPES, POSITIONS, useSettings, allDesigns, designFor, isDesignEdited, fillTokens, designVars,
   escapeHtml, safeColor, safeImage };

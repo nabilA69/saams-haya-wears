@@ -17,7 +17,29 @@ function toast(msg) {
   window._tt = setTimeout(() => t.classList.remove('show'), 2600);
 }
 
-function save(note = 'All changes saved') {
+/* A saved draft is NOT live. Everything below keeps that distinction visible so
+   the owner can never mistake "saved" for "customers can see it". */
+function hasUnpublished() {
+  if (window.SHW.isLocalHost()) return false;          // no publish API locally
+  return (DATA.updatedAt || 0) > (DATA.publishedAt || 0);
+}
+
+function renderPublishState() {
+  const pending = hasUnpublished();
+  document.body.classList.toggle('has-unpublished', pending);
+  const banner = $('#publish-banner');
+  if (banner) banner.hidden = !pending;
+  const dot = $('#publish-dot');
+  if (dot) dot.hidden = !pending;
+  const state = $('#save-state');
+  if (state && !state.classList.contains('saving') && !state.classList.contains('failed')) {
+    state.textContent = window.SHW.isLocalHost() ? 'Local preview · not a live shop'
+      : (pending ? 'Draft saved · not live yet' : 'Everything is live');
+    state.classList.toggle('pending', pending);
+  }
+}
+
+function save(note = 'Draft saved · not live yet') {
   const state = $('#save-state');
   state.textContent = 'Saving…';
   state.classList.add('saving');
@@ -30,7 +52,11 @@ function save(note = 'All changes saved') {
     return false;
   }
   state.classList.remove('failed');
-  setTimeout(() => { state.textContent = note; state.classList.remove('saving'); }, 250);
+  setTimeout(() => {
+    state.classList.remove('saving');
+    state.textContent = note;
+    renderPublishState();
+  }, 250);
   return true;
 }
 
@@ -687,7 +713,10 @@ function download(name, obj) {
 function renderPublishMeta() {
   const size = (new Blob([JSON.stringify(DATA)]).size / 1024).toFixed(0);
   const when = DATA.updatedAt ? new Date(DATA.updatedAt).toLocaleString() : 'not yet saved';
-  $('#pub-meta').textContent = `${DATA.products.length} listings · ${size} KB · last edited ${when}`;
+  const live = DATA.publishedAt ? new Date(DATA.publishedAt).toLocaleString() : 'never';
+  $('#pub-meta').textContent = hasUnpublished()
+    ? `${DATA.products.length} listings · ${size} KB · edited ${when} · last published ${live} · changes waiting`
+    : `${DATA.products.length} listings · ${size} KB · last published ${live}`;
 }
 
 $('#download-json').onclick = () => {
@@ -710,12 +739,15 @@ $('#publish-live').onclick = async () => {
     if (response.status === 401) { window.location.href = '/admin.html'; return; }
     if (!response.ok) throw new Error(result.error || 'Publishing failed');
     DATA.updatedAt = result.updatedAt || Date.now();
-    window.SHW.writeDraft(DATA);
+    DATA.publishedAt = DATA.updatedAt;
+    window.SHW.writeDraft(DATA, { touch: false });
     renderPublishMeta();
-    toast('Published — your storefront is now updated');
+    renderPublishState();
+    toast('Published. Every visitor sees this now.');
   } catch (error) { toast(error.message || 'Publishing failed'); }
   finally { button.disabled = false; button.textContent = 'Publish changes live'; }
 };
+$('#publish-banner-btn').onclick = () => $('#publish-live').click();
 $('#backup').onclick = () => download(`saams-haya-backup-${new Date().toISOString().slice(0, 10)}.json`, DATA);
 $('#restore').onchange = e => {
   const file = e.target.files[0];
@@ -748,12 +780,13 @@ function renderAll() {
   renderPublishMeta();
 }
 
-window.SHW.loadStore().then(data => {
+window.SHW.loadStore({ draft: true }).then(data => {
   DATA = data;
   window.SHW.useSettings(DATA.settings);
   defaultSaleStyle = DATA.settings.defaultSaleStyle || 'classic';
   document.body.classList.add('ready');
   renderAll();
+  renderPublishState();
 }).catch(err => {
   document.body.classList.add('ready');
   $('#listings').innerHTML = '<div class="empty">The catalogue could not be loaded (' +

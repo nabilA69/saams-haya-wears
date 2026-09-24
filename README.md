@@ -99,20 +99,23 @@ To show the changes to everyone else:
 Visitors see the update on their next page load. The studio also has **Download backup** and
 **Restore from file** for moving the catalogue between computers or rolling back.
 
-### One thing to know about the PIN
+### The PIN vs the real password
 
-The studio PIN only hides the page in the browser; it is not real server security, and anyone
-who can read the site’s files can find it. It keeps casual visitors out of the studio, which is
-what it’s for. If you later want true accounts and server-side publishing (so you can update
-the shop from your phone without downloading a file), that needs a small backend — a good next
-step once the shop is running.
+These are two different things, and only one of them protects the live shop.
+
+In production the studio is protected by `ADMIN_PASSWORD` plus a signed, HTTP-only session
+cookie checked on the server. Publishing, photo upload and the studio page itself all verify
+that session, so the studio cannot be opened or written to without the password.
+
+The four-digit PIN is a **localhost-only** convenience for working on your own machine. It never
+applies on the live site, and `admin-local-config.js` is git-ignored so it is never deployed.
 
 ## Contact points
 
 Every WhatsApp entry point — the floating help button, the mobile menu, the contact section,
 the “ask about this piece” link and checkout — uses the number set in *Store settings*
-(currently +233 55 789 6248). Checkout hands the finished order to WhatsApp; no payment is
-taken on the site.
+(currently +233 55 789 6248). Checkout offers online payment through Paystack, with WhatsApp as
+the alternative for customers who prefer to confirm by message.
 
 ## Online payments
 
@@ -125,5 +128,11 @@ before the owner fulfils an order.
 
 ## Production notes
 
-Dependency-free static site — deploy to Netlify, Vercel, Cloudflare Pages, GitHub Pages or any
-standard host. Keep `data/catalog.json` alongside `index.html`.
+**This is no longer a purely static site.** The owner login, publishing and photo uploads run as
+serverless functions in `api/`, and the live catalogue is stored in Vercel Blob. Deploy to Vercel
+(or another host that runs the `api/` functions). On a static-only host such as GitHub Pages or a
+plain Netlify/Cloudflare Pages site the storefront would still render from `data/catalog.json`,
+but owner login, publishing and photo upload would all fail.
+
+`data/catalog.json` stays in the repo as the starter catalogue and the fallback the API serves
+before anything has been published.

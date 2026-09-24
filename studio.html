@@ -7,7 +7,7 @@
   <title>Owner Studio — Saam’s Haya Wears</title>
   <link rel="icon" href="assets/logo.svg" type="image/svg+xml" />
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Italiana&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=6" />
+  <link rel="stylesheet" href="admin.css?v=11" />
   <script>
     /* Bounce straight back to the login page if this tab hasn’t unlocked,
        before any of the studio paints. */
@@ -22,8 +22,8 @@
       }).catch(() => location.replace('/admin.html'));
     }
   </script>
-  <script defer src="store.js?v=6"></script>
-  <script defer src="admin.js?v=7"></script>
+  <script defer src="store.js?v=11"></script>
+  <script defer src="admin.js?v=11"></script>
 </head>
 <body class="studio-page">
 
@@ -36,7 +36,7 @@
       <button data-tab="landing"><i>▣</i> Landing page</button>
       <button data-tab="design"><i>✦</i> Sale designs</button>
       <button data-tab="settings"><i>⚙</i> Store settings</button>
-      <button data-tab="publish"><i>↥</i> Publish</button>
+      <button data-tab="publish"><i>↥</i> Publish<span class="pending-dot" id="publish-dot" hidden></span></button>
     </nav>
     <div class="side-foot">
       <a class="btn ghost" href="index.html" target="_blank" rel="noopener">View storefront ↗</a>
@@ -45,6 +45,14 @@
   </aside>
 
   <main class="work">
+    <div class="publish-banner" id="publish-banner" hidden>
+      <div>
+        <strong>These changes are not live yet.</strong>
+        <span>Your customers still see the last published version. Publish to make your photos and prices visible to everyone.</span>
+      </div>
+      <button class="btn primary" id="publish-banner-btn">Publish changes live</button>
+    </div>
+
     <header class="work-head">
       <div><p class="eyebrow" id="crumb">Listings</p><h2 id="work-title">Your listings</h2></div>
       <div class="head-actions">
